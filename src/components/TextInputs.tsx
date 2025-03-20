@@ -29,7 +29,7 @@ const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className }
   return (
     <div className={cn("space-y-6 animate-fade-up", className)}>
       <div className="space-y-2">
-        <Label htmlFor="type">Wine Type</Label>
+        <Label htmlFor="type">Grape Variety</Label>
         <Input
           id="type"
           name="type"
@@ -41,37 +41,37 @@ const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className }
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="origin">Origin</Label>
+        <Label htmlFor="origin">Country of Origin</Label>
         <Input
           id="origin"
           name="origin"
           value={wineInfo.origin}
           onChange={handleChange}
-          placeholder="e.g., Bordeaux, France"
+          placeholder="e.g., Argentina"
           className="transition-all focus:ring-2 focus:ring-primary/20"
         />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="taste">Taste Profile</Label>
+        <Label htmlFor="taste">Sweetness Level</Label>
         <Input
           id="taste"
           name="taste"
           value={wineInfo.taste}
           onChange={handleChange}
-          placeholder="e.g., Full-bodied with berry notes"
+          placeholder="e.g., Dry"
           className="transition-all focus:ring-2 focus:ring-primary/20"
         />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="corkType">Cork Type</Label>
+        <Label htmlFor="corkType">Closure Type</Label>
         <Input
           id="corkType"
           name="corkType"
           value={wineInfo.corkType}
           onChange={handleChange}
-          placeholder="e.g., Natural Cork"
+          placeholder="e.g., Cork"
           className="transition-all focus:ring-2 focus:ring-primary/20"
         />
       </div>

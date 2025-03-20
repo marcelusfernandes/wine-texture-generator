@@ -32,18 +32,18 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       const width = img.width;
       const height = img.height;
       
-      // Left side bar for wine type
+      // Left side bar for grape variety
       const leftBarWidth = width * 0.25;
       
-      // Draw burgundy background for wine type
+      // Draw burgundy background for grape variety
       ctx.fillStyle = '#8C1C3C';
       ctx.fillRect(0, 0, leftBarWidth, height * 0.5);
       
-      // Draw gray background for wine origin
+      // Draw gray background for country of origin
       ctx.fillStyle = '#555555';
       ctx.fillRect(0, height * 0.5, leftBarWidth, height * 0.5);
       
-      // Draw wine type text vertically
+      // Draw grape variety text vertically
       ctx.save();
       ctx.translate(leftBarWidth / 2, height * 0.25);
       ctx.rotate(-Math.PI / 2);
@@ -53,7 +53,7 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.fillText(wineInfo.type.toUpperCase(), 0, 0);
       ctx.restore();
       
-      // Draw origin text vertically
+      // Draw country of origin text vertically
       ctx.save();
       ctx.translate(leftBarWidth / 2, height * 0.75);
       ctx.rotate(-Math.PI / 2);
@@ -63,23 +63,23 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.fillText(wineInfo.origin.toUpperCase(), 0, 0);
       ctx.restore();
       
-      // Right side for cork type with icon
+      // Right side for closure type with icon
       const rightSide = width * 0.75;
       const iconSize = width * 0.15;
       const iconX = rightSide + (width - rightSide) / 2 - iconSize / 2;
       
-      // Draw cork icon (simplified circle)
+      // Draw closure type icon (simplified circle)
       ctx.beginPath();
       ctx.arc(iconX + iconSize / 2, height * 0.25, iconSize / 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#4A1616';
       ctx.lineWidth = width * 0.005;
       ctx.stroke();
       
-      // Draw cork text
+      // Draw closure type text
       ctx.font = `bold ${Math.max(width * 0.05, 20)}px Inter`;
       ctx.fillStyle = '#4A1616';
       ctx.textAlign = 'center';
-      ctx.fillText('ROLHA', iconX + iconSize / 2, height * 0.4);
+      ctx.fillText(wineInfo.corkType.toUpperCase() || 'ROLHA', iconX + iconSize / 2, height * 0.4);
       
       // Draw country flag icon (simplified circle)
       ctx.beginPath();
@@ -88,18 +88,18 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.lineWidth = width * 0.005;
       ctx.stroke();
       
-      // Draw origin name below flag
+      // Draw origin name below flag (repeated for visibility)
       ctx.font = `bold ${Math.max(width * 0.05, 20)}px Inter`;
       ctx.fillStyle = '#4A1616';
       ctx.textAlign = 'center';
       ctx.fillText(wineInfo.origin.toUpperCase(), iconX + iconSize / 2, height * 0.8);
       
-      // Draw taste note at bottom if needed
+      // Draw sweetness level at bottom if provided
       if (wineInfo.taste) {
         ctx.font = `italic ${Math.max(width * 0.03, 14)}px Inter`;
         ctx.fillStyle = '#333';
         ctx.textAlign = 'center';
-        ctx.fillText(`Taste: ${wineInfo.taste}`, width / 2, height * 0.95);
+        ctx.fillText(`Sweetness: ${wineInfo.taste}`, width / 2, height * 0.95);
       }
     };
     
