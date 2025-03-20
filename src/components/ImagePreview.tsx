@@ -27,7 +27,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
     
     // Create a download link for the canvas content
     const link = document.createElement('a');
-    const filename = `wine-label-${wineInfo.type.toLowerCase().replace(/\s+/g, '-')}.png`;
+    const filename = `${wineInfo.type.toLowerCase().replace(/\s+/g, '-')}-${wineInfo.origin.toLowerCase().replace(/\s+/g, '-')}.png`;
     
     link.download = filename;
     link.href = canvas.toDataURL('image/png');
