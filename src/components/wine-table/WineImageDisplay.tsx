@@ -13,7 +13,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   alt 
 }) => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-center">
       {imageUrl ? (
         <div className="relative">
           <img 
@@ -35,10 +35,6 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           <ImageIcon className="h-4 w-4 text-muted-foreground" />
         </div>
       )}
-      
-      <span className="text-xs text-muted-foreground truncate max-w-[120px]" title={imageUrl || 'Sem URL'}>
-        {imageUrl ? 'URL da imagem' : 'Sem URL'}
-      </span>
     </div>
   );
 };

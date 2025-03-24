@@ -69,9 +69,6 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
       <TableCell>{label.wineInfo.origin}</TableCell>
       <TableCell>{label.wineInfo.taste}</TableCell>
       <TableCell>{label.wineInfo.corkType}</TableCell>
-      <TableCell className="max-w-xs truncate" title={label.wineInfo.info_base || ""}>
-        {label.wineInfo.info_base || "-"}
-      </TableCell>
       <TableCell className="text-right">
         <WineTableActions 
           id={label.id}
