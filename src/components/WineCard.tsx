@@ -63,12 +63,11 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.fillText(wineInfo.type.toUpperCase() || 'GRAPE VARIETY', 0, 0);
       ctx.restore();
       
-      // Right side for closure type with icon (top right)
+      // Draw closure type icon (top right)
       const rightSide = width * 0.75;
       const iconSize = width * 0.15;
       const iconX = rightSide + (width - rightSide) / 2 - iconSize / 2;
       
-      // Draw closure type icon (top right)
       ctx.beginPath();
       ctx.arc(iconX + iconSize / 2, height * 0.25, iconSize / 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#4A1616';
@@ -79,13 +78,7 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.font = `bold ${Math.max(width * 0.04, 18)}px Inter`;
       ctx.fillStyle = '#4A1616';
       ctx.textAlign = 'center';
-      ctx.fillText('CLOSURE', iconX + iconSize / 2, height * 0.45 - 12);
-      ctx.fillText('TYPE', iconX + iconSize / 2, height * 0.45 + 12);
-      
-      // Show the actual closure type value below the label
-      ctx.font = `${Math.max(width * 0.03, 14)}px Inter`;
-      ctx.fillStyle = '#4A1616';
-      ctx.fillText(`(${wineInfo.corkType || 'Not specified'})`, iconX + iconSize / 2, height * 0.45 + 36);
+      ctx.fillText(wineInfo.corkType.toUpperCase() || 'CORK', iconX + iconSize / 2, height * 0.25 + iconSize / 2 + 30);
       
       // Draw country flag icon (bottom right)
       ctx.beginPath();
@@ -98,12 +91,7 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.font = `bold ${Math.max(width * 0.04, 18)}px Inter`;
       ctx.fillStyle = '#4A1616';
       ctx.textAlign = 'center';
-      ctx.fillText('COUNTRY', iconX + iconSize / 2, height * 0.95 - 12);
-      
-      // Show the actual country value below the label
-      ctx.font = `${Math.max(width * 0.03, 14)}px Inter`;
-      ctx.fillStyle = '#4A1616';
-      ctx.fillText(`(${wineInfo.origin || 'Not specified'})`, iconX + iconSize / 2, height * 0.95 + 12);
+      ctx.fillText(wineInfo.origin.toUpperCase() || 'ORIGIN', iconX + iconSize / 2, height * 0.75 + iconSize / 2 + 30);
     };
     
     img.src = imageUrl;
