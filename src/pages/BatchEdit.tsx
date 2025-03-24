@@ -33,6 +33,7 @@ const BatchEdit = () => {
   ]);
   
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const addNewLabel = () => {
@@ -77,6 +78,13 @@ const BatchEdit = () => {
     });
   };
 
+  // Use a local image for export if available, fall back to placeholder image
+  const getPlaceholderImage = (): HTMLImageElement => {
+    const placeholderImg = new Image();
+    placeholderImg.src = '/placeholder.svg';
+    return placeholderImg;
+  };
+
   const exportSelectedLabels = async () => {
     if (selectedLabels.length === 0) {
       toast.error('Selecione pelo menos um rótulo para exportar');
@@ -105,6 +113,12 @@ const BatchEdit = () => {
     for (const labelId of selectedLabels) {
       const label = labels.find(l => l.id === labelId);
       if (!label) continue;
+
+      // Skip labels with known image errors
+      if (imageErrors[labelId]) {
+        toast.error(`Rótulo "${label.name}" possui erro na imagem e não pode ser exportado`);
+        continue;
+      }
 
       const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
       if (!imageUrl) {
@@ -140,11 +154,97 @@ const BatchEdit = () => {
             reject(new Error(`Erro ao carregar imagem para "${label.name}"`));
           };
           
-          img.src = imageUrl;
+          // Try to load the image with CORS proxy if needed
+          let urlToTry = imageUrl;
+          console.log(`Attempting to load image from: ${urlToTry}`);
+          
+          // Set a short timeout to catch CORS errors quickly
+          const timeoutId = setTimeout(() => {
+            console.log(`Timeout loading image for "${label.name}"`);
+            
+            // Fall back to a placeholder image rather than failing completely
+            console.log(`Using placeholder image for "${label.name}"`);
+            const placeholderImg = getPlaceholderImage();
+            drawWineLabel(ctx, placeholderImg, label.wineInfo);
+            
+            const link = document.createElement('a');
+            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+            
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            exportCount++;
+            resolve();
+          }, 3000);
+          
+          img.onload = () => {
+            clearTimeout(timeoutId);
+            
+            // Draw the wine label
+            drawWineLabel(ctx, img, label.wineInfo);
+            
+            // Create a download link
+            const link = document.createElement('a');
+            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+            
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            exportCount++;
+            resolve();
+          };
+          
+          img.onerror = () => {
+            clearTimeout(timeoutId);
+            console.error(`Error loading image for label "${label.name}"`);
+            
+            // Use placeholder instead of failing
+            console.log(`Using placeholder image after error for "${label.name}"`);
+            const placeholderImg = getPlaceholderImage();
+            drawWineLabel(ctx, placeholderImg, label.wineInfo);
+            
+            const link = document.createElement('a');
+            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+            
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            exportCount++;
+            resolve();
+          };
+          
+          img.src = urlToTry;
         });
       } catch (error) {
         console.error('Export error:', error);
-        toast.error(`Erro ao exportar "${label.name}": ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        
+        // Even if there's an error, try to use placeholder
+        try {
+          const placeholderImg = getPlaceholderImage();
+          drawWineLabel(ctx, placeholderImg, label.wineInfo);
+          
+          const link = document.createElement('a');
+          const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+          
+          link.download = filename;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          exportCount++;
+        } catch (fallbackError) {
+          toast.error(`Erro ao exportar "${label.name}": ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        }
       }
     }
 

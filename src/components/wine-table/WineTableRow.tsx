@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { toast } from "sonner";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -55,6 +55,21 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
 
   // Determinar qual URL da imagem usar - primeiro tentar label.imageUrl, depois wineInfo.imageUrl
   const effectiveImageUrl = label.imageUrl || label.wineInfo.imageUrl || null;
+
+  // When the component mounts, test if the image can be loaded
+  useEffect(() => {
+    if (effectiveImageUrl) {
+      const img = new Image();
+      img.onload = () => {
+        setImageErrors(prev => ({ ...prev, [label.id]: false }));
+      };
+      img.onerror = () => {
+        console.log(`Image error detected for label ${label.id}: ${label.name}`);
+        setImageErrors(prev => ({ ...prev, [label.id]: true }));
+      };
+      img.src = effectiveImageUrl;
+    }
+  }, [effectiveImageUrl, label.id, label.name, setImageErrors]);
 
   return (
     <TableRow>
