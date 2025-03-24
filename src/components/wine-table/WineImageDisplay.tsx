@@ -23,23 +23,37 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
     }
 
     try {
-      // Create a temporary link element
-      const link = document.createElement('a');
-      link.href = imageUrl;
-      
-      // Extract filename from URL or use alt text
-      const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-      link.download = filename;
-      
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success(`Imagem "${alt}" baixada com sucesso`);
+      fetch(imageUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          // Create object URL for the blob
+          const blobUrl = window.URL.createObjectURL(blob);
+          
+          // Create temporary link for download
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          
+          // Extract filename from URL or use alt text
+          const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+          link.download = filename;
+          
+          // Append to body, click, and remove
+          document.body.appendChild(link);
+          link.click();
+          
+          // Clean up
+          window.URL.revokeObjectURL(blobUrl);
+          document.body.removeChild(link);
+          
+          toast.success(`Imagem "${alt}" baixada com sucesso`);
+        })
+        .catch(error => {
+          console.error("Error downloading image:", error);
+          toast.error("Erro ao baixar a imagem");
+        });
     } catch (error) {
-      console.error("Error downloading image:", error);
-      toast.error("Erro ao baixar a imagem");
+      console.error("Error initiating download:", error);
+      toast.error("Erro ao iniciar o download da imagem");
     }
   };
 
