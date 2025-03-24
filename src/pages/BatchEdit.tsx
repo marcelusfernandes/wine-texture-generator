@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { WineInfo } from '@/components/TextInputs';
@@ -34,7 +33,6 @@ const BatchEdit = () => {
   
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  const [effectiveImageUrls, setEffectiveImageUrls] = useState<Record<string, string | null>>({});
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const addNewLabel = () => {
@@ -83,46 +81,6 @@ const BatchEdit = () => {
     const placeholderImg = new Image();
     placeholderImg.src = '/placeholder.svg';
     return placeholderImg;
-  };
-
-  const handleSetEffectiveImageUrl = (id: string, url: string | null) => {
-    setEffectiveImageUrls(prev => ({ ...prev, [id]: url }));
-  };
-
-  const exportImage = async () => {
-    if (selectedLabels.length !== 1) {
-      toast.error('Selecione exatamente um rótulo para exportar a imagem');
-      return;
-    }
-
-    const selectedLabelId = selectedLabels[0];
-    const imageUrl = effectiveImageUrls[selectedLabelId];
-
-    if (!imageUrl) {
-      toast.error('Rótulo selecionado não possui imagem para exportar');
-      return;
-    }
-
-    try {
-      const response = await fetch(imageUrl, { mode: 'cors' });
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      const label = labels.find(l => l.id === selectedLabelId);
-      const filename = label ? `${label.name.toLowerCase().replace(/\s+/g, '-')}-original.${blob.type.split('/')[1] || 'png'}` : 'image.png';
-      
-      link.download = filename;
-      link.href = url;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success('Imagem exportada com sucesso');
-    } catch (error) {
-      console.error('Erro ao exportar imagem:', error);
-      toast.error(`Erro ao exportar imagem: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    }
   };
 
   const exportSelectedLabels = async () => {
@@ -248,9 +206,7 @@ const BatchEdit = () => {
           onAddNew={addNewLabel} 
           onImport={handleCsvImport}
           onExport={exportSelectedLabels}
-          onExportImage={exportImage}
           isExportDisabled={selectedLabels.length === 0}
-          isExportImageDisabled={selectedLabels.length !== 1}
         />
 
         <div className="bg-white rounded-xl shadow-md p-6 animate-fade-up">
@@ -260,7 +216,6 @@ const BatchEdit = () => {
             onUpdate={setLabels}
             selectedLabels={selectedLabels}
             onSelectionChange={setSelectedLabels}
-            onSetEffectiveImageUrl={handleSetEffectiveImageUrl}
           />
         </div>
       </div>
