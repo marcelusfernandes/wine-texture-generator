@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import CsvImportButton from '@/components/CsvImportButton';
 
 const defaultWineInfo: WineInfo = {
   type: 'Cabernet Sauvignon',
@@ -98,6 +99,22 @@ const BatchEdit = () => {
     setEditingName(null);
     toast.success('Label name updated');
   };
+  
+  const handleCsvImport = (importedLabels: { name: string; wineInfo: WineInfo }[]) => {
+    // Get the next available ID
+    let nextId = Math.max(0, ...labels.map(label => parseInt(label.id))) + 1;
+    
+    // Create new wine labels from imported data
+    const newLabels = importedLabels.map(imported => ({
+      id: (nextId++).toString(),
+      name: imported.name,
+      imageUrl: null,
+      wineInfo: imported.wineInfo
+    }));
+    
+    // Add new labels to existing ones
+    setLabels(prevLabels => [...prevLabels, ...newLabels]);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-12 px-4 sm:px-6">
@@ -111,16 +128,20 @@ const BatchEdit = () => {
             </Link>
             <h1 className="text-2xl font-bold tracking-tight">Batch Edit Wine Labels</h1>
           </div>
-          <Button onClick={addNewLabel} className="gap-1">
-            <Plus className="h-4 w-4" />
-            Add New Label
-          </Button>
+          <div className="flex gap-2">
+            <CsvImportButton onImport={handleCsvImport} />
+            <Button onClick={addNewLabel} className="gap-1">
+              <Plus className="h-4 w-4" />
+              Add New Label
+            </Button>
+          </div>
         </header>
 
         <div className="bg-white rounded-xl shadow-md p-6 animate-fade-up">
           <div className="mb-6">
             <p className="text-muted-foreground">
               Manage multiple wine labels at once. Add, edit, duplicate, or remove labels from your collection.
+              You can also import labels from a CSV file.
             </p>
           </div>
           
