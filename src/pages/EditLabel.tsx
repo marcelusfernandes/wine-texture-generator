@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -19,13 +18,25 @@ const EditLabel = () => {
     type: 'Cabernet Sauvignon',
     origin: 'France',
     taste: 'Dry',
-    corkType: 'Cork'
+    corkType: 'Cork',
+    imageUrl: null // Ensure we have this field to store the image URL
   });
   const [labelName, setLabelName] = useState(`Wine Label ${id}`);
 
   useEffect(() => {
     // Simulating a data fetch
     toast.info(`Editing label #${id}`);
+    
+    // In a real app, we would fetch the data here
+    // For now, let's set a sample imageUrl to demonstrate
+    const thumbnailUrl = 'https://images.unsplash.com/photo-1506377295141-e2e12c05fb28?q=80&w=200';
+    setImageUrl(thumbnailUrl);
+    
+    // Also set the image URL in wineInfo to ensure it's available throughout the app
+    setWineInfo(prev => ({
+      ...prev,
+      imageUrl: thumbnailUrl
+    }));
   }, [id]);
 
   const handleImageUpload = (file: File, preview: string) => {
@@ -35,11 +46,20 @@ const EditLabel = () => {
     }
     
     setImageUrl(preview);
+    // Also update the imageUrl in wineInfo to keep them in sync
+    setWineInfo(prev => ({
+      ...prev,
+      imageUrl: preview
+    }));
     toast.success('Image uploaded successfully');
   };
 
   const handleInfoChange = (newInfo: WineInfo) => {
-    setWineInfo(newInfo);
+    // Preserve the imageUrl when updating other info
+    setWineInfo({
+      ...newInfo,
+      imageUrl: newInfo.imageUrl || imageUrl
+    });
   };
 
   const handleSave = () => {

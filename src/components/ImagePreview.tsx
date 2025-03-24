@@ -17,8 +17,10 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
   wineInfo, 
   className 
 }) => {
-  // Utiliza a imageUrl passada como prop ou a do wineInfo como fallback
+  // Use imageUrl as primary source, fall back to wineInfo.imageUrl
   const effectiveImageUrl = imageUrl || wineInfo.imageUrl || null;
+  
+  console.log("ImagePreview using URL:", effectiveImageUrl);
 
   const handleDownload = () => {
     if (!effectiveImageUrl) return;
@@ -53,7 +55,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
         </Button>
       </div>
       
-      <WineCard imageUrl={imageUrl} wineInfo={wineInfo} />
+      <WineCard imageUrl={effectiveImageUrl} wineInfo={wineInfo} />
       
       {effectiveImageUrl && (
         <div className="text-sm text-muted-foreground mt-2 animate-fade-up">
