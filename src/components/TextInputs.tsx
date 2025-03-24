@@ -63,7 +63,7 @@ const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className }
           className="transition-all focus:ring-2 focus:ring-primary/20"
         />
         <p className="text-xs text-muted-foreground">
-          Note: This value will be displayed as "SWEET" on the label regardless of what you enter
+          Note: Your input will be displayed on the left side of the label
         </p>
       </div>
       

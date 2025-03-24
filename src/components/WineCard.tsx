@@ -43,14 +43,14 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.fillStyle = '#666666';
       ctx.fillRect(0, height * 0.5, leftBarWidth, height * 0.5);
       
-      // Draw "SWEET" text vertically (top left) - always display as SWEET regardless of input
+      // Draw sweetness level text vertically (top left) - display user input
       ctx.save();
       ctx.translate(leftBarWidth / 2, height * 0.25);
       ctx.rotate(-Math.PI / 2);
       ctx.textAlign = 'center';
       ctx.font = `bold ${Math.max(width * 0.06, 24)}px Inter`;
       ctx.fillStyle = 'white';
-      ctx.fillText('SWEET', 0, 0);
+      ctx.fillText(wineInfo.taste.toUpperCase() || 'SWEET', 0, 0);
       ctx.restore();
       
       // Draw grape variety text vertically (bottom left)
