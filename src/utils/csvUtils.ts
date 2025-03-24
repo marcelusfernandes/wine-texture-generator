@@ -52,6 +52,16 @@ const REQUIRED_HEADERS = {
 };
 
 /**
+ * Normaliza um texto para comparação (remove acentos, espaços extras, etc.)
+ */
+const normalizeText = (text: string): string => {
+  return text.trim()
+    .toLowerCase()
+    .replace(/"/g, '') // Remove aspas
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remove acentos
+};
+
+/**
  * Analisa um arquivo CSV e retorna os dados como um array de objetos
  * @param file O arquivo CSV a ser analisado
  * @returns Promise com array de objetos representando linhas do CSV
@@ -68,24 +78,29 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         }
         
         const csvText = event.target.result as string;
-        const rows = csvText.split('\n');
         
-        if (rows.length <= 1) {
+        // Verifica se o arquivo está vazio
+        if (!csvText.trim()) {
+          reject(new Error('O arquivo CSV está vazio'));
+          return;
+        }
+        
+        // Divide o CSV em linhas, lidando com diferentes terminadores de linha
+        const rows = csvText.split(/\r\n|\n|\r/).filter(row => row.trim());
+        
+        if (rows.length <= 0) {
           reject(new Error('Arquivo CSV vazio ou inválido'));
           return;
         }
         
         // Analisa cabeçalhos (primeira linha)
-        const headers = rows[0].split(',').map(header => 
-          header.trim().toLowerCase()
-            .replace(/"/g, '') // Remove aspas
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
-        );
-        
-        if (headers.length === 0) {
-          reject(new Error('Cabeçalhos CSV não encontrados'));
+        const headerRow = rows[0];
+        if (!headerRow || !headerRow.includes(',')) {
+          reject(new Error('Formato CSV inválido: não foram encontrados cabeçalhos separados por vírgula na primeira linha'));
           return;
         }
+        
+        const headers = headerRow.split(',').map(header => normalizeText(header));
         
         console.log('Cabeçalhos CSV detectados:', headers);
         
@@ -94,16 +109,30 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         let foundAtLeastOneRequiredHeader = false;
         
         headers.forEach((header, index) => {
-          if (REQUIRED_HEADERS[header]) {
-            columnMap[index] = REQUIRED_HEADERS[header];
+          // Ignora cabeçalhos vazios
+          if (!header.trim()) return;
+          
+          // Verifica se é um cabeçalho que conhecemos
+          const matchedHeader = Object.keys(REQUIRED_HEADERS).find(
+            knownHeader => normalizeText(knownHeader) === header
+          );
+          
+          if (matchedHeader) {
+            columnMap[index] = REQUIRED_HEADERS[matchedHeader];
             foundAtLeastOneRequiredHeader = true;
-            console.log(`Cabeçalho encontrado: ${header} na coluna ${index}`);
+            console.log(`Cabeçalho encontrado: ${header} (${matchedHeader}) na coluna ${index}`);
+          } else {
+            console.log(`Ignorando cabeçalho desconhecido: ${header} na coluna ${index}`);
           }
         });
         
         if (!foundAtLeastOneRequiredHeader) {
           console.error('Nenhum dos cabeçalhos necessários foi encontrado');
-          reject(new Error('Nenhum cabeçalho reconhecido encontrado no CSV. Certifique-se de incluir pelo menos um dos seguintes: label_name/nome, grape_variety/uva, origin/pais, taste/classificacao, closure_type/tampa'));
+          const headersList = Object.keys(REQUIRED_HEADERS)
+            .filter(h => ['label_name', 'nome', 'grape_variety', 'uva', 'origin', 'pais', 'taste', 'classificacao', 'closure_type', 'tampa'].includes(h))
+            .join(', ');
+            
+          reject(new Error(`Nenhum cabeçalho reconhecido encontrado no CSV. O arquivo deve ter pelo menos um destes cabeçalhos: ${headersList}`));
           return;
         }
         
@@ -114,8 +143,8 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           const row = rows[i].trim();
           if (!row) continue; // Pula linhas vazias
           
-          // Divide a linha em valores, respeitando aspas
-          const values = row.split(',').map(val => val.trim().replace(/"/g, ''));
+          // Divide a linha em valores, respeitando aspas (implementação simplificada)
+          const values = row.split(',').map(val => val.trim().replace(/^"(.*)"$/, '$1'));
           
           // Só processa a linha se tiver valores suficientes
           if (values.length < 1) {
@@ -134,7 +163,6 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           
           // Verifica se tem pelo menos um dado válido
           if (Object.keys(rowData).length > 0) {
-            console.log(`Linha ${i} processada:`, rowData);
             data.push(rowData);
           }
         }
@@ -176,14 +204,10 @@ export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
  * @returns Booleano indicando se os dados são válidos
  */
 export const validateWineInfo = (wineInfo: WineInfo): boolean => {
-  // Verifica se pelo menos type e origin têm valores válidos
+  // Verifica se pelo menos type ou origin têm valores válidos (menos rigoroso agora)
   return Boolean(
-    wineInfo.type && 
-    wineInfo.type.length > 0 && 
-    wineInfo.type !== 'Desconhecido' &&
-    wineInfo.origin && 
-    wineInfo.origin.length > 0 &&
-    wineInfo.origin !== 'Outra'
+    (wineInfo.type && wineInfo.type.length > 0) || 
+    (wineInfo.origin && wineInfo.origin.length > 0)
   );
 };
 
@@ -207,8 +231,8 @@ export const processCsvFile = async (file: File): Promise<{
     const validLabels = rows
       .map(row => {
         const wineInfo = mapCsvRowToWineInfo(row);
-        // Usa o nome do label se disponível, senão usa nome antigo
-        const name = row.label_name || row.nome || 'Vinho sem nome';
+        // Usa o nome do label se disponível, senão usa nome antigo, ou gera um nome padrão
+        const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
         
         return { name, wineInfo, isValid: validateWineInfo(wineInfo) };
       })
@@ -218,7 +242,7 @@ export const processCsvFile = async (file: File): Promise<{
     console.log(`${validLabels.length} de ${rows.length} rótulos são válidos`);
     
     if (validLabels.length === 0) {
-      throw new Error('Nenhum rótulo válido encontrado nos dados');
+      throw new Error('Nenhum rótulo válido encontrado nos dados. Verifique se o seu CSV contém as informações necessárias.');
     }
     
     return validLabels;

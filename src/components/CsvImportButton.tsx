@@ -1,7 +1,7 @@
 
 import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { FileUp, Loader2 } from 'lucide-react';
+import { FileUp, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { processCsvFile } from '@/utils/csvUtils';
 import { WineInfo } from './TextInputs';
@@ -27,17 +27,25 @@ const CsvImportButton: React.FC<CsvImportButtonProps> = ({ onImport, className }
 
     // Check if it's a CSV file
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      toast.error('Por favor, faça upload de um arquivo CSV');
+      toast.error('Por favor, faça upload de um arquivo CSV', {
+        description: 'O arquivo deve ter a extensão .csv'
+      });
       return;
     }
 
     try {
       setIsLoading(true);
-      toast.info('Processando arquivo CSV...');
+      toast.info('Processando arquivo CSV...', {
+        description: 'Analisando cabeçalhos e dados do arquivo.'
+      });
+      
       const wineLabels = await processCsvFile(file);
       
       if (wineLabels.length === 0) {
-        toast.error('Nenhum dado válido encontrado no arquivo CSV');
+        toast.error('Nenhum dado válido encontrado no arquivo CSV', {
+          description: 'Verifique se o arquivo contém dados válidos no formato correto.',
+          icon: <AlertCircle className="h-5 w-5" />
+        });
         return;
       }
 
@@ -46,21 +54,24 @@ const CsvImportButton: React.FC<CsvImportButtonProps> = ({ onImport, className }
       
       // Show a sample of what was imported
       const firstLabel = wineLabels[0];
-      toast.info(
-        `Amostra: "${firstLabel.name}" (Uva: ${firstLabel.wineInfo.type}, Origem: ${firstLabel.wineInfo.origin}, Sabor: ${firstLabel.wineInfo.taste}, Tampa: ${firstLabel.wineInfo.corkType})`,
-        { duration: 5000 }
-      );
+      toast.success(`${wineLabels.length} rótulos de vinho importados com sucesso`, {
+        description: `Amostra: "${firstLabel.name}" (Uva: ${firstLabel.wineInfo.type}, Origem: ${firstLabel.wineInfo.origin})`,
+        duration: 5000
+      });
 
       onImport(wineLabels);
-      toast.success(`${wineLabels.length} rótulos de vinho importados com sucesso`);
       
       // Reset the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao importar CSV:', error);
-      toast.error('Falha ao importar arquivo CSV. Verifique o formato.');
+      toast.error('Falha ao importar arquivo CSV', {
+        description: error.message || 'Verifique se o formato está correto e tente novamente.',
+        icon: <AlertCircle className="h-5 w-5" />,
+        duration: 7000
+      });
     } finally {
       setIsLoading(false);
     }
