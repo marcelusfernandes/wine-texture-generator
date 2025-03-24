@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for handling CSV files
  */
@@ -7,11 +6,19 @@ import { WineInfo } from "@/components/TextInputs";
 
 // Define the structure of a row in the CSV file
 export interface CsvWineRow {
-  nome?: string;            // Nome(Tipo + Uva + marca) = Nome do produto
-  classificacao?: string;   // Classificação = Sweetness level
-  uva?: string;             // Uva = Grape Variety
-  pais?: string;            // País = Country
-  tampa?: string;           // Tampa = Closure Type
+  label_name?: string;       // New header: label_name
+  grape_variety?: string;    // New header: grape_variety
+  origin?: string;           // New header: origin
+  taste?: string;            // New header: taste
+  closure_type?: string;     // New header: closure_type
+  
+  // Keep the old headers for backward compatibility
+  nome?: string;
+  classificacao?: string;
+  uva?: string;
+  pais?: string;
+  tampa?: string;
+  
   [key: string]: string | undefined; // Allow for other columns
 }
 
@@ -42,10 +49,18 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
       
       // Map normalized header names to our expected fields
       const headerMap: { [key: string]: string } = {
+        // New header mappings
+        'label_name': 'label_name',
+        'grape_variety': 'grape_variety',
+        'origin': 'origin',
+        'taste': 'taste',
+        'closure_type': 'closure_type',
+        
+        // Legacy header mappings (kept for compatibility)
         'nome': 'nome',
         'name': 'nome',
         'nome(tipo + uva + marca)': 'nome',
-        'nome (tipo + uva + marca)': 'nome', // Added with space
+        'nome (tipo + uva + marca)': 'nome',
         'classificacao': 'classificacao',
         'classificação': 'classificacao',
         'sweetness': 'classificacao',
@@ -100,10 +115,11 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
  */
 export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
   return {
-    type: rowData.uva || 'Unknown',
-    origin: rowData.pais || 'Other',
-    taste: rowData.classificacao || 'Dry',
-    corkType: rowData.tampa || 'Cork'
+    // Check for new headers first, then fall back to legacy headers
+    type: rowData.grape_variety || rowData.uva || 'Unknown',
+    origin: rowData.origin || rowData.pais || 'Other',
+    taste: rowData.taste || rowData.classificacao || 'Dry',
+    corkType: rowData.closure_type || rowData.tampa || 'Cork'
   };
 };
 
@@ -120,7 +136,8 @@ export const processCsvFile = async (file: File): Promise<{
     const rows = await parseCsvFile(file);
     
     return rows.map(row => ({
-      name: row.nome || 'Unnamed Wine',
+      // Check for new label_name header first, then fall back to nome
+      name: row.label_name || row.nome || 'Unnamed Wine',
       wineInfo: mapCsvRowToWineInfo(row)
     }));
   } catch (error) {
