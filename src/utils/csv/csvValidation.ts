@@ -13,21 +13,17 @@ export const normalizeText = (text: string): string => {
 
 /**
  * Simplificado: Retorna a URL como string, sem validações
+ * Esta função foi mantida para compatibilidade com o código existente,
+ * mas não está mais sendo usada diretamente
  */
 export const validateImageUrl = (url: string | undefined): string | null => {
-  console.log(`[URL Validation] Recebido: ${url}`);
-  
   if (!url || url.trim() === '') {
-    console.log(`[URL Validation] URL vazia ou indefinida`);
     return null;
   }
   
   // Remove quotes that might have been incorrectly parsed from CSV
   let cleanUrl = url.trim().replace(/^["']|["']$/g, '');
   
-  console.log(`[URL Validation] URL após limpeza: "${cleanUrl}"`);
-  
-  // Retorna a URL sem validações
   return cleanUrl;
 };
 
@@ -42,8 +38,6 @@ export const validateWineInfo = (wineInfo: WineInfo): boolean => {
     (wineInfo.type && wineInfo.type.length > 0) || 
     (wineInfo.origin && wineInfo.origin.length > 0)
   );
-  
-  console.log(`[Wine Validation] Validando dados de vinho: ${isValid ? 'VÁLIDO' : 'INVÁLIDO'}`, wineInfo);
   
   return isValid;
 };

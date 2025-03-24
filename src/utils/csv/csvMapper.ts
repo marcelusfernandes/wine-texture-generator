@@ -1,7 +1,6 @@
 
 import { WineInfo } from "@/components/TextInputs";
 import { CsvWineRow } from "./csvTypes";
-import { validateImageUrl } from "./csvValidation";
 
 /**
  * Converte dados de linha CSV para objeto WineInfo
@@ -9,23 +8,13 @@ import { validateImageUrl } from "./csvValidation";
  * @returns Objeto WineInfo com valores mapeados
  */
 export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
-  // Processa a URL da imagem
-  let imageUrl = null;
-  if (rowData.image_url) {
-    console.log(`[CSV Mapper] Mapeando image_url: "${rowData.image_url}"`);
-    imageUrl = validateImageUrl(rowData.image_url);
-  } else if (rowData.imagem) {
-    console.log(`[CSV Mapper] Mapeando imagem legada: "${rowData.imagem}"`);
-    imageUrl = validateImageUrl(rowData.imagem);
-  }
-
   return {
     // Verifica primeiro os novos cabeçalhos, depois usa os legados como fallback
     type: rowData.grape_variety || rowData.uva || 'Desconhecido',
     origin: rowData.origin || rowData.pais || 'Outra',
     taste: rowData.taste || rowData.classificacao || 'Seco',
     corkType: rowData.closure_type || rowData.tampa || 'Rolha',
-    imageUrl // Usando ES6 shorthand property notation (equivalente a imageUrl: imageUrl)
+    imageUrl: rowData.image_url || rowData.imagem || null
   };
 };
 
@@ -47,16 +36,9 @@ export const mapCsvRowsToWineLabels = (rows: CsvWineRow[]): {
     const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
     
     console.log(`[CSV Mapper] Processando linha ${index + 1}: "${name}"`);
-    console.log(`[CSV Mapper] Dados da linha:`, row);
     
-    // Log dos valores de image_url e imagem para diagnóstico
-    console.log(`[CSV Mapper] Valor de image_url: ${String(row.image_url)}`);
-    console.log(`[CSV Mapper] Valor de imagem: ${String(row.imagem)}`);
-    
-    // Utilizamos a URL da imagem já mapeada no wineInfo
+    // Utilizamos diretamente o imageUrl do wineInfo
     const imageUrl = wineInfo.imageUrl;
-    
-    console.log(`[CSV Mapper] URL final para "${name}": ${imageUrl}`);
     
     return { 
       name, 

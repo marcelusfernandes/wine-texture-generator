@@ -11,9 +11,6 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   imageUrl, 
   alt 
 }) => {
-  // Log da URL recebida
-  console.log(`[WineImageDisplay] URL para "${alt}": ${imageUrl || 'null'}`);
-  
   return (
     <div className="flex items-center text-xs text-muted-foreground">
       <Image className="h-4 w-4 mr-2 text-muted-foreground" />
