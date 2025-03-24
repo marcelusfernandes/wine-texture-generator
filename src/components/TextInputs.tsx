@@ -61,10 +61,9 @@ const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className }
           onChange={handleChange}
           placeholder="e.g., Dry"
           className="transition-all focus:ring-2 focus:ring-primary/20"
-          disabled
         />
         <p className="text-xs text-muted-foreground">
-          Note: This field is always displayed as "SWEET" on the label
+          Note: This value will be displayed as "SWEET" on the label regardless of what you enter
         </p>
       </div>
       

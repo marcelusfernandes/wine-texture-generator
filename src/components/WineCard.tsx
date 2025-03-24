@@ -43,7 +43,7 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.fillStyle = '#666666';
       ctx.fillRect(0, height * 0.5, leftBarWidth, height * 0.5);
       
-      // Draw sweetness level text vertically (top left)
+      // Draw "SWEET" text vertically (top left) - always display as SWEET regardless of input
       ctx.save();
       ctx.translate(leftBarWidth / 2, height * 0.25);
       ctx.rotate(-Math.PI / 2);
@@ -60,7 +60,7 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.textAlign = 'center';
       ctx.font = `bold ${Math.max(width * 0.05, 20)}px Inter`;
       ctx.fillStyle = 'white';
-      ctx.fillText(`${wineInfo.type.toUpperCase()}`, 0, 0);
+      ctx.fillText(wineInfo.type.toUpperCase() || 'GRAPE VARIETY', 0, 0);
       ctx.restore();
       
       // Right side for closure type with icon (top right)
@@ -85,7 +85,7 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       // Show the actual closure type value below the label
       ctx.font = `${Math.max(width * 0.03, 14)}px Inter`;
       ctx.fillStyle = '#4A1616';
-      ctx.fillText(`(${wineInfo.corkType})`, iconX + iconSize / 2, height * 0.45 + 36);
+      ctx.fillText(`(${wineInfo.corkType || 'Not specified'})`, iconX + iconSize / 2, height * 0.45 + 36);
       
       // Draw country flag icon (bottom right)
       ctx.beginPath();
@@ -103,7 +103,7 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       // Show the actual country value below the label
       ctx.font = `${Math.max(width * 0.03, 14)}px Inter`;
       ctx.fillStyle = '#4A1616';
-      ctx.fillText(`(${wineInfo.origin})`, iconX + iconSize / 2, height * 0.95 + 12);
+      ctx.fillText(`(${wineInfo.origin || 'Not specified'})`, iconX + iconSize / 2, height * 0.95 + 12);
     };
     
     img.src = imageUrl;
