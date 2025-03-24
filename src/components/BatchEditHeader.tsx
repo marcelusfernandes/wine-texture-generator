@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, HelpCircle, Download } from 'lucide-react';
+import { ArrowLeft, Plus, HelpCircle, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CsvImportButton from '@/components/CsvImportButton';
 import { WineInfo } from '@/components/TextInputs';
@@ -17,13 +17,15 @@ interface BatchEditHeaderProps {
   onImport: (labels: { name: string; wineInfo: WineInfo }[]) => void;
   onExport: () => void;
   isExportDisabled: boolean;
+  isExporting?: boolean;
 }
 
 const BatchEditHeader: React.FC<BatchEditHeaderProps> = ({ 
   onAddNew, 
   onImport,
   onExport,
-  isExportDisabled
+  isExportDisabled,
+  isExporting = false
 }) => {
   return (
     <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
@@ -55,12 +57,16 @@ const BatchEditHeader: React.FC<BatchEditHeaderProps> = ({
       <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
         <Button 
           onClick={onExport} 
-          disabled={isExportDisabled}
+          disabled={isExportDisabled || isExporting}
           variant="outline"
           className="gap-1"
         >
-          <Download className="h-4 w-4" />
-          Exportar Selecionados
+          {isExporting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          {isExporting ? 'Exportando...' : 'Exportar Selecionados'}
         </Button>
         <CsvImportButton onImport={onImport} />
         <Button onClick={onAddNew} className="gap-1">
