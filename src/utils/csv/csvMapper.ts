@@ -9,12 +9,11 @@ import { CsvWineRow } from "./csvTypes";
  */
 export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
   return {
-    // Verifica primeiro os novos cabeçalhos, depois usa os legados como fallback
-    type: rowData.grape_variety || rowData.uva || 'Desconhecido',
-    origin: rowData.origin || rowData.pais || 'Outra',
-    taste: rowData.taste || rowData.classificacao || 'Seco',
-    corkType: rowData.closure_type || rowData.tampa || 'Rolha',
-    imageUrl: rowData.image_url || rowData.imagem || null
+    type: rowData.grape_variety || 'Desconhecido',
+    origin: rowData.origin || 'Outra',
+    taste: rowData.taste || 'Seco',
+    corkType: rowData.closure_type || 'Rolha',
+    imageUrl: rowData.image_url || null
   };
 };
 
@@ -32,8 +31,8 @@ export const mapCsvRowsToWineLabels = (rows: CsvWineRow[]): {
   return rows.map((row, index) => {
     const wineInfo = mapCsvRowToWineInfo(row);
     
-    // Usa o nome do label se disponível, senão usa nome antigo, ou gera um nome padrão
-    const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
+    // Usa o nome do label ou gera um nome padrão
+    const name = row.label_name || `Vinho ${Math.floor(Math.random() * 1000)}`;
     
     console.log(`[CSV Mapper] Processando linha ${index + 1}: "${name}"`);
     

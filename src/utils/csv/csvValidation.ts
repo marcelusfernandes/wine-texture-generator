@@ -13,8 +13,6 @@ export const normalizeText = (text: string): string => {
 
 /**
  * Simplificado: Retorna a URL como string, sem validações
- * Esta função foi mantida para compatibilidade com o código existente,
- * mas não está mais sendo usada diretamente
  */
 export const validateImageUrl = (url: string | undefined): string | null => {
   if (!url || url.trim() === '') {
@@ -33,7 +31,7 @@ export const validateImageUrl = (url: string | undefined): string | null => {
  * @returns Booleano indicando se os dados são válidos
  */
 export const validateWineInfo = (wineInfo: WineInfo): boolean => {
-  // Verifica se pelo menos type ou origin têm valores válidos (menos rigoroso agora)
+  // Verifica se pelo menos type ou origin têm valores válidos
   const isValid = Boolean(
     (wineInfo.type && wineInfo.type.length > 0) || 
     (wineInfo.origin && wineInfo.origin.length > 0)
