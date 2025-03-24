@@ -48,11 +48,14 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
     console.log(`[WineTableRow] Rótulo ${label.id} info_base: "${label.wineInfo.info_base}" (${label.wineInfo.info_base.length} caracteres)`);
   }
 
+  // Determinar qual URL da imagem usar - primeiro tentar label.imageUrl, depois wineInfo.imageUrl
+  const effectiveImageUrl = label.imageUrl || label.wineInfo.imageUrl || null;
+
   return (
     <TableRow>
       <TableCell>
         <WineImageDisplay 
-          imageUrl={label.imageUrl} 
+          imageUrl={effectiveImageUrl} 
           alt={label.name}
         />
       </TableCell>
@@ -73,7 +76,7 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
         <WineTableActions 
           id={label.id}
           showDeleteConfirm={deleteConfirmId === label.id}
-          imageUrl={label.imageUrl}
+          imageUrl={effectiveImageUrl}
           onDuplicate={() => onDuplicate(label.id)}
           onDeleteRequest={() => onDeleteRequest(label.id)}
           onDeleteConfirm={() => onDeleteConfirm(label.id)}
