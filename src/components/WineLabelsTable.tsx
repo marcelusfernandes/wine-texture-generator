@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Copy, Edit, Trash2, Check, X, Image } from 'lucide-react';
+import { Copy, Edit, Trash2, Check, X, Image, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { WineInfo } from '@/components/TextInputs';
@@ -20,6 +21,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface WineLabel {
   id: string;
@@ -42,6 +50,9 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
   
   // Track image loading errors
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  
+  // Estado para controlar o dialog de visualização da imagem
+  const [viewImageUrl, setViewImageUrl] = useState<string | null>(null);
 
   const startEditingName = (id: string, currentName: string) => {
     setEditingName(id);
@@ -97,6 +108,23 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
   const handleImageError = (id: string) => {
     setImageErrors(prev => ({ ...prev, [id]: true }));
     console.log(`Image failed to load for label ID: ${id}`);
+  };
+  
+  // Function to view image in dialog
+  const viewImage = (url: string | null) => {
+    if (!url) {
+      toast.error('Nenhuma imagem disponível para este rótulo');
+      return;
+    }
+    
+    const cleanUrl = getCleanImageUrl(url);
+    if (!cleanUrl) {
+      toast.error('URL da imagem inválida');
+      return;
+    }
+    
+    // Open in a new tab
+    window.open(cleanUrl, '_blank');
   };
   
   // Helper to clean image URL - Updated to handle complex URLs
@@ -257,6 +285,13 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
                         <DropdownMenuItem onClick={() => duplicateLabel(label.id)}>
                           <Copy className="h-4 w-4 mr-2" />
                           Duplicar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => viewImage(label.imageUrl)}
+                          disabled={!label.imageUrl}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Ver imagem
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => confirmDelete(label.id)}>
                           <Trash2 className="h-4 w-4 mr-2 text-destructive" />
