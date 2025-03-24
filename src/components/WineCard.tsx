@@ -20,7 +20,19 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
     if (!ctx) return;
 
     const img = new Image();
-    img.onload = () => {
+    const corkIcon = new Image();
+    corkIcon.src = '/lovable-uploads/2a593e39-a1f3-44d0-ad7e-c030ea3547f0.png';
+    
+    // Load both images before rendering
+    Promise.all([
+      new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.src = imageUrl;
+      }),
+      new Promise<void>((resolve) => {
+        corkIcon.onload = () => resolve();
+      })
+    ]).then(() => {
       // Set canvas dimensions to 1080x1080 for the format requested
       canvas.width = 1080;
       canvas.height = 1080;
@@ -132,13 +144,11 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       
       ctx.restore();
       
-      // Draw the closure type icon (top right)
-      ctx.fillStyle = '#D9D9D9';
-      ctx.globalAlpha = 0.8;
-      ctx.beginPath();
-      ctx.rect(700 + (336 - 209) / 2, 151, 209, 210);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      // Draw the cork icon (top right) instead of the gray rectangle
+      const corkIconX = 700 + (336 - 209) / 2;
+      const corkIconY = 151;
+      const corkIconSize = 210;
+      ctx.drawImage(corkIcon, corkIconX, corkIconY, corkIconSize, corkIconSize);
       
       // Draw closure type text
       ctx.font = 'bold 56px "Arial Rounded MT Bold", Arial, sans-serif';
@@ -168,9 +178,7 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.fillStyle = '#3F0E09';
       ctx.textAlign = 'center';
       ctx.fillText(wineInfo.origin.toUpperCase() || 'COUNTRY', 668 + 412 / 2, 708 + 210 + 18 + 56);
-    };
-    
-    img.src = imageUrl;
+    });
   }, [imageUrl, wineInfo]);
 
   return (
