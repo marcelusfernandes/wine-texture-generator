@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Image as ImageIcon, Download, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -17,11 +17,12 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [localImage, setLocalImage] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageClick = () => {
     // Se temos uma imagem local (que foi carregada pelo usuário), use-a diretamente
     if (localImage) {
-      downloadImage(localImage);
+      generateAndDownloadImage(localImage);
       return;
     }
 
@@ -31,30 +32,25 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
       return;
     }
 
-    // Caso contrário, tente baixar a imagem remota
-    downloadImage(imageUrl);
+    // Caso contrário, tente gerar e baixar uma nova imagem a partir da miniatura
+    generateAndDownloadImage(imageUrl);
   };
 
-  const downloadImage = (imgSrc: string) => {
+  const generateAndDownloadImage = (imgSrc: string) => {
     try {
-      // Verificar se a imagem é uma URL de dados (data URL)
+      // Criamos uma nova imagem a partir da fonte
+      const img = new Image();
+      
+      // Se for uma data URL, podemos carregá-la diretamente
       if (imgSrc.startsWith('data:')) {
-        // Se for data URL, podemos baixar diretamente
-        const link = document.createElement('a');
-        link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-        link.href = imgSrc;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success(`Imagem "${alt}" exportada com sucesso`);
+        img.onload = () => renderAndDownloadCanvas(img);
+        img.src = imgSrc;
         return;
       }
-
-      // Se for uma URL remota, precisamos usar canvas para contornar CORS
-      const img = new Image();
+      
+      // Se for URL remota, tentamos criar uma cópia local primeiro
       img.crossOrigin = "anonymous";
       
-      // Timeout para evitar que a operação fique travada
       const timeoutId = setTimeout(() => {
         toast.error("Tempo esgotado ao tentar carregar a imagem");
         useFallbackImage();
@@ -62,47 +58,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
       
       img.onload = () => {
         clearTimeout(timeoutId);
-        
-        // Create a canvas and draw the image
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          
-          // Try to export the image
-          canvas.toBlob((blob) => {
-            if (!blob) {
-              toast.error("Erro ao converter a imagem");
-              useFallbackImage();
-              return;
-            }
-            
-            // Create download link
-            const blobUrl = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            
-            // Extract filename or use alt text
-            const filename = imgSrc.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-            link.download = filename;
-            link.href = blobUrl;
-            
-            // Trigger download
-            document.body.appendChild(link);
-            link.click();
-            
-            // Clean up
-            URL.revokeObjectURL(blobUrl);
-            document.body.removeChild(link);
-            
-            toast.success(`Imagem "${alt}" exportada com sucesso`);
-          }, 'image/png');
-        } else {
-          toast.error("Erro ao criar contexto para exportação");
-          useFallbackImage();
-        }
+        renderAndDownloadCanvas(img);
       };
       
       img.onerror = () => {
@@ -116,6 +72,55 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
       console.error("Erro ao exportar imagem:", error);
       toast.error("Erro ao exportar imagem");
       useFallbackImage();
+    }
+  };
+  
+  const renderAndDownloadCanvas = (img: HTMLImageElement) => {
+    if (!canvasRef.current) {
+      toast.error("Erro ao preparar tela para exportação");
+      return;
+    }
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      toast.error("Erro ao criar contexto para exportação");
+      return;
+    }
+    
+    // Definir as dimensões do canvas
+    canvas.width = 1080;
+    canvas.height = 1080;
+    
+    // Desenhar apenas a imagem de fundo (sem sobreposições)
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    
+    // Criar link de download
+    try {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error("Erro ao converter a imagem");
+          return;
+        }
+        
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+        link.href = blobUrl;
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(link);
+        
+        toast.success(`Imagem "${alt}" exportada com sucesso`);
+      }, 'image/png');
+    } catch (error) {
+      console.error("Erro ao exportar canvas:", error);
+      toast.error("Erro ao exportar imagem");
     }
   };
   
@@ -162,11 +167,14 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 
   return (
     <div className="flex items-center justify-center">
+      {/* Canvas escondido para exportação */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      
       {effectiveImageUrl && !hasError ? (
         <div 
           className="relative cursor-pointer group" 
           onClick={handleImageClick}
-          title={localImage ? "Clique para exportar a imagem (carregada localmente)" : "Clique para exportar a imagem"}
+          title={localImage ? "Clique para exportar a imagem (carregada localmente)" : "Clique para gerar e exportar uma nova imagem"}
         >
           <img 
             src={effectiveImageUrl}
