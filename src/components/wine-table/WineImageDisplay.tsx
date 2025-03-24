@@ -1,8 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Image as ImageIcon, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import html2canvas from "html2canvas";
 
 interface WineImageDisplayProps {
   imageUrl: string | null;
@@ -15,106 +16,80 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
-  const fetchAndDownloadImage = async () => {
-    if (!imageUrl || hasError) {
+  const captureAndDownloadImage = async () => {
+    if (!imageUrl || hasError || !imageRef.current) {
       toast.error("Não há imagem disponível para download");
       return;
     }
 
     try {
+      // Indicar que o processo começou
       setIsLoading(true);
+      toast.info("Preparando a imagem para download...");
       
-      // Tentar fazer o fetch da imagem para contornar problemas de CORS
-      const response = await fetch(imageUrl, { mode: 'cors' })
-        .catch(() => {
-          // Se falhar com cors, tentar sem cors (para imagens locais)
-          return fetch(imageUrl);
-        });
+      // Usar html2canvas para capturar a imagem
+      const canvas = await html2canvas(imageRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        scale: 2, // Melhor qualidade
+        logging: false
+      });
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.status}`);
-      }
+      // Converter para PNG
+      const imageData = canvas.toDataURL('image/png');
       
-      // Converter a resposta em um blob
-      const blob = await response.blob();
-      
-      // Criar uma URL para o blob
-      const blobUrl = URL.createObjectURL(blob);
-      setDownloadUrl(blobUrl);
-      
-      // Criar um link temporário para download
+      // Criar um link para download
       const link = document.createElement('a');
-      link.href = blobUrl;
+      link.href = imageData;
+      link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
       
-      // Extrair nome do arquivo da URL ou usar o texto alt
-      const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-      link.download = filename;
-      
-      // Acionar o download
+      // Iniciar o download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      // Liberar a URL do objeto após um curto atraso
-      setTimeout(() => {
-        if (blobUrl) {
-          URL.revokeObjectURL(blobUrl);
-          setDownloadUrl(null);
-        }
-      }, 100);
-      
-      toast.success(`Imagem "${alt}" baixada com sucesso`);
+      toast.success(`Imagem "${alt}" capturada e baixada com sucesso`);
     } catch (error) {
-      console.error("Error downloading image:", error);
+      console.error("Erro ao capturar imagem:", error);
+      toast.error("Erro ao capturar e baixar a imagem");
       
-      // Alternativa: tentar renderizar em canvas se o fetch falhar
+      // Tentativa de fallback com método anterior
       try {
+        // Criar um canvas manualmente
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        if (!ctx) {
-          throw new Error("Não foi possível criar contexto de canvas");
+        if (!ctx || !imageRef.current) {
+          throw new Error("Contexto de canvas indisponível");
         }
         
-        // Criar imagem temporária
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
+        // Configurar tamanho do canvas baseado na imagem
+        canvas.width = imageRef.current.naturalWidth || imageRef.current.width;
+        canvas.height = imageRef.current.naturalHeight || imageRef.current.height;
         
-        img.onload = () => {
-          // Configurar tamanho do canvas
-          canvas.width = img.width;
-          canvas.height = img.height;
+        // Desenhar a imagem no canvas
+        ctx.drawImage(imageRef.current, 0, 0);
+        
+        try {
+          // Exportar como PNG
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
           
-          // Desenhar a imagem no canvas
-          ctx.drawImage(img, 0, 0);
-          
-          // Converter para data URL e iniciar download
-          try {
-            const dataUrl = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            toast.success(`Imagem "${alt}" baixada com sucesso (via canvas)`);
-          } catch (canvasError) {
-            console.error("Canvas export error:", canvasError);
-            toast.error("Erro ao exportar imagem do canvas");
-          }
-        };
-        
-        img.onerror = () => {
-          toast.error("Não foi possível renderizar a imagem em canvas");
-        };
-        
-        img.src = imageUrl;
-      } catch (canvasError) {
-        console.error("Canvas fallback error:", canvasError);
-        toast.error("Erro ao baixar a imagem (CORS bloqueado)");
+          toast.success(`Imagem "${alt}" baixada com sucesso (fallback)`);
+        } catch (err) {
+          console.error("Erro no fallback:", err);
+          toast.error("Erro ao exportar imagem");
+        }
+      } catch (fallbackError) {
+        console.error("Erro no método fallback:", fallbackError);
       }
     } finally {
       setIsLoading(false);
@@ -122,7 +97,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   };
 
   const handleImageClick = () => {
-    fetchAndDownloadImage();
+    captureAndDownloadImage();
   };
 
   return (
@@ -134,6 +109,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           title="Clique para baixar a imagem"
         >
           <img 
+            ref={imageRef}
             src={imageUrl} 
             alt={alt}
             className={cn(
