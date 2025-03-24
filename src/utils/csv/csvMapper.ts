@@ -8,6 +8,11 @@ import { CsvWineRow } from "./csvTypes";
  * @returns Objeto WineInfo com valores mapeados
  */
 export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
+  // Log detalhado para depuração do campo info_base
+  if (rowData.info_base) {
+    console.log(`[CSV Mapper] info_base original: "${rowData.info_base}" (${rowData.info_base.length} caracteres)`);
+  }
+  
   return {
     type: rowData.grape_variety || 'Desconhecido',
     origin: rowData.origin || 'Outra',
@@ -30,12 +35,16 @@ export const mapCsvRowsToWineLabels = (rows: CsvWineRow[]): {
   console.log(`[CSV Mapper] Iniciando mapeamento de ${rows.length} linhas para rótulos de vinho`);
   
   return rows.map((row, index) => {
+    // Log dos dados brutos para depuração
+    console.log(`[CSV Mapper] Dados da linha ${index + 1}:`, row);
+    
     const wineInfo = mapCsvRowToWineInfo(row);
     
     // Usa o nome do label ou gera um nome padrão
     const name = row.label_name || `Vinho ${Math.floor(Math.random() * 1000)}`;
     
     console.log(`[CSV Mapper] Processando linha ${index + 1}: "${name}"`);
+    console.log(`[CSV Mapper] info_base mapeado: "${wineInfo.info_base}" (${wineInfo.info_base?.length || 0} caracteres)`);
     
     // Utilizamos diretamente o imageUrl do wineInfo
     const imageUrl = wineInfo.imageUrl;

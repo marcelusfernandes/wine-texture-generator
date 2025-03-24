@@ -44,7 +44,8 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           return;
         }
         
-        const headers = headerRow.split(',').map(header => normalizeText(header));
+        // Parsing correto dos cabeçalhos, tratando aspas e separadores
+        const headers = parseCSVRow(headerRow).map(header => normalizeText(header));
         
         console.log('[CSV Parser] Cabeçalhos CSV detectados:', headers);
         
@@ -72,15 +73,13 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         
         if (!foundAtLeastOneRequiredHeader) {
           console.error('[CSV Parser] Nenhum dos cabeçalhos necessários foi encontrado');
-          const headersList = Object.keys(REQUIRED_HEADERS)
-            .filter(h => ['label_name', 'nome', 'grape_variety', 'uva', 'origin', 'pais', 'taste', 'classificacao', 'closure_type', 'tampa', 'image_url', 'imagem'].includes(h))
-            .join(', ');
+          const headersList = Object.keys(REQUIRED_HEADERS).join(', ');
             
           reject(new Error(`Nenhum cabeçalho reconhecido encontrado no CSV. O arquivo deve ter pelo menos um destes cabeçalhos: ${headersList}`));
           return;
         }
         
-        // Mapeia linhas CSV para objetos, ignorando colunas que não nos interessam
+        // Mapeia linhas CSV para objetos, com tratamento adequado para campos com vírgulas
         const data: CsvWineRow[] = [];
         
         console.log('[CSV Parser] Mapeamento de colunas definido:', columnMap);
@@ -89,10 +88,11 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           const row = rows[i].trim();
           if (!row) continue; // Pula linhas vazias
           
-          // Divide a linha em valores, respeitando aspas (implementação simplificada)
-          const values = row.split(',').map(val => val.trim());
+          // Divide a linha respeitando campos entre aspas que podem conter vírgulas
+          const values = parseCSVRow(row);
           
           console.log(`[CSV Parser] Linha ${i}: ${row}`);
+          console.log(`[CSV Parser] Valores extraídos: ${JSON.stringify(values)}`);
           
           // Só processa a linha se tiver valores suficientes
           if (values.length < 1) {
@@ -108,9 +108,13 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
               const value = values[index];
               rowData[fieldName] = value;
               
-              // Log especial para URLs de imagem
-              if ((fieldName === 'image_url' || fieldName === 'imagem') && value) {
-                console.log(`[CSV Parser] Linha ${i}: encontrada coluna "${fieldName}" com valor: "${value}"`);
+              // Log especial para URLs de imagem e info_base
+              if (fieldName === 'image_url' && value) {
+                console.log(`[CSV Parser] Linha ${i}: encontrada coluna "image_url" com valor: "${value}"`);
+              }
+              
+              if (fieldName === 'info_base' && value) {
+                console.log(`[CSV Parser] Linha ${i}: encontrada coluna "info_base" com valor: "${value}"`);
               }
             }
           });
@@ -128,9 +132,11 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         if (data.length > 0) {
           console.log('[CSV Parser] Exemplo da primeira linha processada:', data[0]);
           
-          // Verifique especificamente pelos campos de imagem
-          const withImageUrl = data.filter(row => row.image_url || row.imagem).length;
+          // Verifique especificamente pelos campos de imagem e info_base
+          const withImageUrl = data.filter(row => row.image_url).length;
+          const withInfoBase = data.filter(row => row.info_base).length;
           console.log(`[CSV Parser] Linhas com URLs de imagem: ${withImageUrl} de ${data.length}`);
+          console.log(`[CSV Parser] Linhas com info_base: ${withInfoBase} de ${data.length}`);
         }
         
         resolve(data);
@@ -148,3 +154,40 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
   });
 };
 
+/**
+ * Parse uma linha CSV, respeitando campos entre aspas que podem conter vírgulas
+ * @param line A linha CSV a ser analisada
+ * @returns Array de valores, respeitando campos entre aspas
+ */
+function parseCSVRow(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      // Se encontrarmos aspas duplas consecutivas dentro de um campo com aspas, é um escape
+      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+        current += '"';
+        i++; // Pula o próximo caractere (as aspas de escape)
+      } else {
+        // Caso contrário, alternar o estado "dentro de aspas"
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Se encontrarmos uma vírgula e não estivermos dentro de aspas, é um delimitador
+      result.push(current.trim());
+      current = '';
+    } else {
+      // Qualquer outro caractere, adiciona ao valor atual
+      current += char;
+    }
+  }
+  
+  // Adiciona o último valor
+  result.push(current.trim());
+  
+  return result;
+}

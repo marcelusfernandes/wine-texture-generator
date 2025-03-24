@@ -42,6 +42,11 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
 
   // Para diagnóstico - vamos logar os dados do rótulo
   console.log(`[WineTableRow] Renderizando rótulo ${label.id}: "${label.name}" - URL imagem: ${label.imageUrl || 'SEM URL'}`);
+  
+  // Log detalhado do campo info_base
+  if (label.wineInfo.info_base) {
+    console.log(`[WineTableRow] Rótulo ${label.id} info_base: "${label.wineInfo.info_base}" (${label.wineInfo.info_base.length} caracteres)`);
+  }
 
   return (
     <TableRow>
@@ -61,7 +66,9 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
       <TableCell>{label.wineInfo.origin}</TableCell>
       <TableCell>{label.wineInfo.taste}</TableCell>
       <TableCell>{label.wineInfo.corkType}</TableCell>
-      <TableCell>{label.wineInfo.info_base || "-"}</TableCell>
+      <TableCell className="max-w-xs truncate" title={label.wineInfo.info_base || ""}>
+        {label.wineInfo.info_base || "-"}
+      </TableCell>
       <TableCell className="text-right">
         <WineTableActions 
           id={label.id}
