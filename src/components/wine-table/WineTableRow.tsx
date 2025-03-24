@@ -60,6 +60,7 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
   useEffect(() => {
     if (effectiveImageUrl) {
       const img = new Image();
+      img.crossOrigin = "anonymous";
       img.onload = () => {
         setImageErrors(prev => ({ ...prev, [label.id]: false }));
       };
