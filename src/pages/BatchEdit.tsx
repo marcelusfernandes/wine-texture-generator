@@ -6,7 +6,6 @@ import BatchEditHeader from '@/components/BatchEditHeader';
 import BatchEditDescription from '@/components/BatchEditDescription';
 import WineLabelsTable from '@/components/WineLabelsTable';
 import { drawWineLabel, drawErrorState } from '@/utils/canvasUtils';
-import { exportWineLabel } from '@/utils/exportUtils';
 
 const defaultWineInfo: WineInfo = {
   type: 'Cabernet Sauvignon',
@@ -80,49 +79,132 @@ const BatchEdit = () => {
     });
   };
 
+  const getPlaceholderImage = (): HTMLImageElement => {
+    const placeholderImg = new Image();
+    placeholderImg.src = '/placeholder.svg';
+    return placeholderImg;
+  };
+
   const exportSelectedLabels = async () => {
     if (selectedLabels.length === 0) {
       toast.error('Selecione pelo menos um rótulo para exportar');
       return;
     }
 
+    if (!canvasRef.current) {
+      console.error('Canvas reference not found');
+      toast.error('Erro ao preparar exportação');
+      return;
+    }
+
     setIsExporting(true);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error('Could not get canvas context');
+      toast.error('Erro ao preparar exportação');
+      setIsExporting(false);
+      return;
+    }
+
     let exportCount = 0;
     const totalToExport = selectedLabels.length;
     
-    try {
-      for (const labelId of selectedLabels) {
-        const label = labels.find(l => l.id === labelId);
-        if (!label) continue;
+    for (const labelId of selectedLabels) {
+      const label = labels.find(l => l.id === labelId);
+      if (!label) continue;
 
-        if (imageErrors[labelId]) {
-          toast.error(`Rótulo "${label.name}" possui erro na imagem e não pode ser exportado`);
-          continue;
-        }
-
-        // Use the imageUrl directly for export - this is the thumbnail URL
-        const imageUrl = label.imageUrl;
-        if (!imageUrl) {
-          toast.error(`Rótulo "${label.name}" não possui imagem para exportar`);
-          continue;
-        }
-
-        try {
-          // Use the new export utility
-          await exportWineLabel(imageUrl, label.wineInfo, label.name);
-          exportCount++;
-        } catch (error) {
-          console.error('Export error:', error);
-          toast.error(`Erro ao exportar "${label.name}": ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-        }
+      // Get the effective image URL (from label.imageUrl or fallback to wineInfo.imageUrl)
+      const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
+      if (!imageUrl) {
+        toast.error(`Rótulo "${label.name}" não possui imagem para exportar`);
+        continue;
       }
 
-      if (exportCount > 0) {
-        toast.success(`${exportCount} de ${totalToExport} rótulos exportados com sucesso`);
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          
+          const timeoutId = setTimeout(() => {
+            console.log(`Timeout loading image for "${label.name}"`);
+            toast.warning(`Tempo esgotado ao carregar imagem para "${label.name}". Usando imagem padrão.`);
+            
+            const placeholderImg = getPlaceholderImage();
+            drawWineLabel(ctx, placeholderImg, label.wineInfo);
+            
+            const link = document.createElement('a');
+            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+            
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            exportCount++;
+            resolve();
+          }, 5000);
+          
+          img.onload = () => {
+            clearTimeout(timeoutId);
+            console.log(`Successfully loaded image for "${label.name}" from URL: ${imageUrl}`);
+            
+            // Clear the canvas before drawing
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw wine label with loaded image
+            drawWineLabel(ctx, img, label.wineInfo);
+            
+            const link = document.createElement('a');
+            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+            
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            exportCount++;
+            resolve();
+          };
+          
+          img.onerror = () => {
+            clearTimeout(timeoutId);
+            console.error(`Error loading image for label "${label.name}" from URL: ${imageUrl}`);
+            toast.warning(`Erro ao carregar imagem para "${label.name}". Usando imagem padrão.`);
+            
+            const placeholderImg = getPlaceholderImage();
+            drawWineLabel(ctx, placeholderImg, label.wineInfo);
+            
+            const link = document.createElement('a');
+            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+            
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            exportCount++;
+            resolve();
+          };
+          
+          // Set the image source last to start loading
+          console.log(`Attempting to load image from URL: ${imageUrl}`);
+          img.src = imageUrl;
+        });
+      } catch (error) {
+        console.error('Export error:', error);
+        toast.error(`Erro ao exportar "${label.name}": ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
       }
-    } finally {
-      setIsExporting(false);
     }
+
+    if (exportCount > 0) {
+      toast.success(`${exportCount} de ${totalToExport} rótulos exportados com sucesso`);
+    }
+    
+    setIsExporting(false);
   };
 
   return (
@@ -132,7 +214,7 @@ const BatchEdit = () => {
           onAddNew={addNewLabel} 
           onImport={handleCsvImport}
           onExport={exportSelectedLabels}
-          isExportDisabled={selectedLabels.length === 0}
+          isExportDisabled={selectedLabels.length === 0 || isExporting}
           isExporting={isExporting}
         />
 

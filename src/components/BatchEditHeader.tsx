@@ -57,7 +57,7 @@ const BatchEditHeader: React.FC<BatchEditHeaderProps> = ({
       <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
         <Button 
           onClick={onExport} 
-          disabled={isExportDisabled || isExporting}
+          disabled={isExportDisabled}
           variant="outline"
           className="gap-1"
         >
