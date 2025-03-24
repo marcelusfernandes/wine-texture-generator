@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Image as ImageIcon, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { decodeImageForDownload } from "@/utils/imageUtils";
 
 interface WineImageDisplayProps {
   imageUrl: string | null;
@@ -16,59 +17,21 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleImageClick = () => {
+  const handleImageClick = async () => {
     if (!imageUrl || hasError) {
       toast.error("Não há imagem disponível para download");
       return;
     }
 
     try {
-      // Create a canvas element to draw the image (can bypass CORS issues)
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.crossOrigin = "anonymous";
-      
-      img.onload = () => {
-        // Set canvas size to match image
-        canvas.width = img.width;
-        canvas.height = img.height;
-        
-        // Draw image on canvas
-        ctx?.drawImage(img, 0, 0);
-        
-        try {
-          // Convert canvas to data URL
-          const dataUrl = canvas.toDataURL('image/png');
-          
-          // Create download link
-          const link = document.createElement('a');
-          link.href = dataUrl;
-          
-          // Extract filename from URL or use alt text
-          const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-          link.download = filename;
-          
-          // Trigger download
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          toast.success(`Imagem "${alt}" baixada com sucesso`);
-        } catch (e) {
-          console.error("Error creating download from canvas:", e);
-          fallbackDownload();
-        }
-      };
-      
-      img.onerror = fallbackDownload;
-      
-      // Set image source to trigger loading
-      img.src = imageUrl;
+      await decodeImageForDownload(imageUrl, alt);
+      toast.success(`Imagem "${alt}" baixada com sucesso`);
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      toast.error("Erro ao baixar a imagem. Tentando método alternativo...");
       
       // Fallback method using direct link
-      function fallbackDownload() {
+      try {
         const link = document.createElement('a');
         link.href = imageUrl;
         
@@ -80,10 +43,10 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
         document.body.removeChild(link);
         
         toast.success(`Imagem "${alt}" baixada com sucesso`);
+      } catch (fallbackError) {
+        console.error("Fallback download failed:", fallbackError);
+        toast.error("Não foi possível baixar a imagem");
       }
-    } catch (error) {
-      console.error("Error downloading image:", error);
-      toast.error("Erro ao baixar a imagem");
     }
   };
 

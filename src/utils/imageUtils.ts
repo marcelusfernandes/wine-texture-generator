@@ -102,7 +102,7 @@ export const resizeImage = (
 };
 
 /**
- * Tests if a URL can be loaded (simplificado)
+ * Tests if a URL can be loaded
  */
 export const testImageUrl = (url: string): Promise<boolean> => {
   return new Promise((resolve) => {
@@ -117,9 +117,152 @@ export const testImageUrl = (url: string): Promise<boolean> => {
 };
 
 /**
- * Retorna a URL sem processamento adicional
+ * Converts a remote URL to a data URL to bypass CORS
+ * @param url The remote image URL
+ * @returns Promise with data URL or null if failed
  */
-export const decodeComplexUrl = (url: string): string => {
-  console.log("URL original:", url);
-  return url;
+export const urlToDataUrl = (url: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    // Create a proxy URL if needed for CORS
+    const proxyUrl = url.startsWith('http') 
+      ? `https://cors-anywhere.herokuapp.com/${url}` 
+      : url;
+      
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      img.onload = () => {
+        try {
+          // Create canvas to convert to data URL
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            console.error("Failed to get canvas context");
+            resolve(null);
+            return;
+          }
+          
+          // Draw image to canvas and convert to data URL
+          ctx.drawImage(img, 0, 0);
+          const dataUrl = canvas.toDataURL('image/png');
+          resolve(dataUrl);
+        } catch (err) {
+          console.error("Error converting to data URL:", err);
+          resolve(null);
+        }
+      };
+      
+      img.onerror = () => {
+        console.error("Error loading image with proxy");
+        // Try directly without proxy as fallback
+        if (proxyUrl !== url) {
+          const directImg = new Image();
+          directImg.crossOrigin = "anonymous";
+          
+          directImg.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = directImg.width;
+              canvas.height = directImg.height;
+              
+              const ctx = canvas.getContext('2d');
+              if (!ctx) {
+                resolve(null);
+                return;
+              }
+              
+              ctx.drawImage(directImg, 0, 0);
+              resolve(canvas.toDataURL('image/png'));
+            } catch (err) {
+              console.error("Direct load error:", err);
+              resolve(null);
+            }
+          };
+          
+          directImg.onerror = () => {
+            console.error("Failed to load image directly");
+            resolve(null);
+          };
+          
+          directImg.src = url;
+        } else {
+          resolve(null);
+        }
+      };
+      
+      img.src = proxyUrl;
+    } catch (error) {
+      console.error("Error in urlToDataUrl:", error);
+      resolve(null);
+    }
+  });
+};
+
+/**
+ * Decodes an image URL for download
+ */
+export const decodeImageForDownload = (
+  imageUrl: string, 
+  altText: string
+): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Check if already a data URL
+      if (imageUrl.startsWith('data:')) {
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        const filename = `${altText.toLowerCase().replace(/\s+/g, '-')}.png`;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        resolve();
+        return;
+      }
+      
+      // Try to convert URL to data URL
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error("Failed to get canvas context"));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0);
+          const dataUrl = canvas.toDataURL('image/png');
+          
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          const filename = `${altText.toLowerCase().replace(/\s+/g, '-')}.png`;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      };
+      
+      img.onerror = (err) => {
+        reject(err);
+      };
+      
+      img.src = imageUrl;
+    } catch (error) {
+      reject(error);
+    }
+  });
 };

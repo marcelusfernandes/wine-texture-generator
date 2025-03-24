@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import ImageUploader from '@/components/ImageUploader';
 import TextInputs, { WineInfo } from '@/components/TextInputs';
 import ImagePreview from '@/components/ImagePreview';
-import { isImageFile, testImageUrl } from '@/utils/imageUtils';
+import { isImageFile, testImageUrl, urlToDataUrl } from '@/utils/imageUtils';
 
 const Index = () => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -23,14 +23,35 @@ const Index = () => {
   useEffect(() => {
     if (wineInfo.imageUrl && wineInfo.imageUrl !== imageUrl) {
       // Only update if the URLs are different
-      testImageUrl(wineInfo.imageUrl)
-        .then(isValid => {
-          if (isValid) {
-            setImageUrl(wineInfo.imageUrl);
-          } else {
+      const handleImageUrl = async () => {
+        try {
+          // Test if the URL is valid
+          const isValid = await testImageUrl(wineInfo.imageUrl!);
+          
+          if (!isValid) {
             toast.error('A URL da imagem não é válida ou está inacessível');
+            return;
           }
-        });
+          
+          // Try to convert to data URL to avoid CORS issues
+          const dataUrl = await urlToDataUrl(wineInfo.imageUrl!);
+          
+          if (dataUrl) {
+            // Use data URL instead of original URL
+            setImageUrl(dataUrl);
+            toast.success('Imagem carregada com sucesso');
+          } else {
+            // Fallback to original URL if conversion fails
+            setImageUrl(wineInfo.imageUrl!);
+            toast.warning('URL de imagem carregada, mas pode haver problemas com CORS');
+          }
+        } catch (error) {
+          console.error("Error handling image URL:", error);
+          toast.error('Erro ao processar a URL da imagem');
+        }
+      };
+      
+      handleImageUrl();
     }
   }, [wineInfo.imageUrl, imageUrl]);
 
@@ -43,7 +64,7 @@ const Index = () => {
     // Clear the URL field when uploading a file
     setWineInfo(prev => ({
       ...prev,
-      imageUrl: null
+      imageUrl: ''
     }));
     
     setImageUrl(preview);

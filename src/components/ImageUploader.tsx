@@ -80,9 +80,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, className 
           Select Image
         </Button>
         
-        <div className="flex items-center gap-2 mt-2">
-          <LinkIcon className="h-4 w-4 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 mt-2 group transition-colors p-2 hover:bg-primary/5 rounded-lg">
+          <LinkIcon className="h-4 w-4 text-primary" />
+          <p className="text-sm font-medium text-primary">
             Or add a URL in the Wine Information section below
           </p>
         </div>
