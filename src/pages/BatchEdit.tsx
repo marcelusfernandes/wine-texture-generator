@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { WineInfo } from '@/components/TextInputs';
@@ -33,6 +34,7 @@ const BatchEdit = () => {
   
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [isExporting, setIsExporting] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const addNewLabel = () => {
@@ -95,11 +97,13 @@ const BatchEdit = () => {
       return;
     }
 
+    setIsExporting(true);
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       console.error('Could not get canvas context');
       toast.error('Erro ao preparar exportação');
+      setIsExporting(false);
       return;
     }
 
@@ -110,11 +114,7 @@ const BatchEdit = () => {
       const label = labels.find(l => l.id === labelId);
       if (!label) continue;
 
-      if (imageErrors[labelId]) {
-        toast.error(`Rótulo "${label.name}" possui erro na imagem e não pode ser exportado`);
-        continue;
-      }
-
+      // Get the effective image URL (from label.imageUrl or fallback to wineInfo.imageUrl)
       const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
       if (!imageUrl) {
         toast.error(`Rótulo "${label.name}" não possui imagem para exportar`);
@@ -148,8 +148,12 @@ const BatchEdit = () => {
           
           img.onload = () => {
             clearTimeout(timeoutId);
-            console.log(`Successfully loaded image for "${label.name}"`);
+            console.log(`Successfully loaded image for "${label.name}" from URL: ${imageUrl}`);
             
+            // Clear the canvas before drawing
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw wine label with loaded image
             drawWineLabel(ctx, img, label.wineInfo);
             
             const link = document.createElement('a');
@@ -186,6 +190,8 @@ const BatchEdit = () => {
             resolve();
           };
           
+          // Set the image source last to start loading
+          console.log(`Attempting to load image from URL: ${imageUrl}`);
           img.src = imageUrl;
         });
       } catch (error) {
@@ -197,6 +203,8 @@ const BatchEdit = () => {
     if (exportCount > 0) {
       toast.success(`${exportCount} de ${totalToExport} rótulos exportados com sucesso`);
     }
+    
+    setIsExporting(false);
   };
 
   return (
@@ -206,7 +214,8 @@ const BatchEdit = () => {
           onAddNew={addNewLabel} 
           onImport={handleCsvImport}
           onExport={exportSelectedLabels}
-          isExportDisabled={selectedLabels.length === 0}
+          isExportDisabled={selectedLabels.length === 0 || isExporting}
+          isExporting={isExporting}
         />
 
         <div className="bg-white rounded-xl shadow-md p-6 animate-fade-up">
