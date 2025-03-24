@@ -9,6 +9,7 @@ export interface WineInfo {
   origin: string;
   taste: string;
   corkType: string;
+  imageUrl?: string | null;
 }
 
 interface TextInputsProps {

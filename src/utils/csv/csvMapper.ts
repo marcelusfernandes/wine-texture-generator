@@ -9,12 +9,23 @@ import { validateImageUrl } from "./csvValidation";
  * @returns Objeto WineInfo com valores mapeados
  */
 export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
+  // Processa a URL da imagem
+  let imageUrl = null;
+  if (rowData.image_url) {
+    console.log(`[CSV Mapper] Mapeando image_url: "${rowData.image_url}"`);
+    imageUrl = validateImageUrl(rowData.image_url);
+  } else if (rowData.imagem) {
+    console.log(`[CSV Mapper] Mapeando imagem legada: "${rowData.imagem}"`);
+    imageUrl = validateImageUrl(rowData.imagem);
+  }
+
   return {
     // Verifica primeiro os novos cabeçalhos, depois usa os legados como fallback
     type: rowData.grape_variety || rowData.uva || 'Desconhecido',
     origin: rowData.origin || rowData.pais || 'Outra',
     taste: rowData.taste || rowData.classificacao || 'Seco',
-    corkType: rowData.closure_type || rowData.tampa || 'Rolha'
+    corkType: rowData.closure_type || rowData.tampa || 'Rolha',
+    imageUrl: imageUrl
   };
 };
 
@@ -42,18 +53,8 @@ export const mapCsvRowsToWineLabels = (rows: CsvWineRow[]): {
     console.log(`[CSV Mapper] Valor de image_url: ${String(row.image_url)}`);
     console.log(`[CSV Mapper] Valor de imagem: ${String(row.imagem)}`);
     
-    // Processa a URL da imagem sem validações complexas
-    let imageUrl = null;
-    
-    if (row.image_url) {
-      console.log(`[CSV Mapper] Encontrado valor em image_url para "${name}": "${row.image_url}"`);
-      imageUrl = validateImageUrl(row.image_url);
-    } else if (row.imagem) {
-      console.log(`[CSV Mapper] Encontrado valor em imagem para "${name}": "${row.imagem}"`);
-      imageUrl = validateImageUrl(row.imagem);
-    } else {
-      console.log(`[CSV Mapper] Nenhum valor de URL encontrado para "${name}"`);
-    }
+    // Utilizamos a URL da imagem já mapeada no wineInfo
+    const imageUrl = wineInfo.imageUrl;
     
     console.log(`[CSV Mapper] URL final para "${name}": ${imageUrl}`);
     

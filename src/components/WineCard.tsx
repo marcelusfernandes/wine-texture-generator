@@ -13,17 +13,19 @@ interface WineCardProps {
 }
 
 const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) => {
-  const { canvasRef, loadError } = useWineCanvas(imageUrl, wineInfo);
+  // Utiliza a imageUrl passada como prop ou a do wineInfo como fallback
+  const effectiveImageUrl = imageUrl || wineInfo.imageUrl || null;
+  const { canvasRef, loadError } = useWineCanvas(effectiveImageUrl, wineInfo);
 
   return (
     <div className={cn("relative rounded-xl overflow-hidden bg-white shadow-xl animate-fade-in", className)}>
-      {imageUrl ? (
+      {effectiveImageUrl ? (
         <div className="relative">
           <canvas
             ref={canvasRef}
             className="w-full h-auto max-h-[600px] object-contain"
           />
-          {loadError && <ErrorDisplay imageUrl={imageUrl} />}
+          {loadError && <ErrorDisplay imageUrl={effectiveImageUrl} />}
         </div>
       ) : (
         <PlaceholderDisplay />
