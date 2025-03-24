@@ -13,6 +13,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   alt 
 }) => {
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   return (
     <div className="flex items-center justify-center">
@@ -21,12 +22,22 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           <img 
             src={imageUrl} 
             alt={alt}
-            className="h-10 w-10 object-cover rounded" 
+            className={cn(
+              "h-10 w-10 object-cover rounded",
+              isLoading && "opacity-0"
+            )}
+            onLoad={() => setIsLoading(false)}
             onError={() => {
               console.log(`Error loading thumbnail for "${alt}"`);
               setHasError(true);
+              setIsLoading(false);
             }}
           />
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted rounded">
+              <ImageIcon className="h-4 w-4 text-muted-foreground animate-pulse" />
+            </div>
+          )}
         </div>
       ) : (
         <div className="h-10 w-10 flex items-center justify-center bg-muted rounded">
