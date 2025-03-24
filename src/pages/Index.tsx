@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Sparkles, List } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ImageUploader from '@/components/ImageUploader';
 import TextInputs, { WineInfo } from '@/components/TextInputs';
 import ImagePreview from '@/components/ImagePreview';
@@ -44,6 +46,14 @@ const Index = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
             Upload your wine bottle image and add product information for your PIM system
           </p>
+          <div className="flex justify-center mt-4 animate-fade-up" style={{ animationDelay: '200ms' }}>
+            <Link to="/batch">
+              <Button variant="outline" className="gap-2">
+                <List className="h-4 w-4" />
+                Batch Edit Mode
+              </Button>
+            </Link>
+          </div>
         </header>
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
