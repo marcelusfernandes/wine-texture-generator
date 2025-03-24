@@ -15,9 +15,6 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Log the image URL for debugging
-  console.log(`WineImageDisplay rendering with URL: ${imageUrl}`);
-
   return (
     <div className="flex items-center justify-center">
       {imageUrl && !hasError ? (
@@ -25,17 +22,13 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           <img 
             src={imageUrl} 
             alt={alt}
-            crossOrigin="anonymous" // Add crossOrigin attribute to handle CORS
             className={cn(
               "h-10 w-10 object-cover rounded",
               isLoading && "opacity-0"
             )}
-            onLoad={() => {
-              console.log(`Image loaded successfully: ${alt}`);
-              setIsLoading(false);
-            }}
+            onLoad={() => setIsLoading(false)}
             onError={() => {
-              console.log(`Error loading thumbnail for "${alt}" from URL: ${imageUrl}`);
+              console.log(`Error loading thumbnail for "${alt}"`);
               setHasError(true);
               setIsLoading(false);
             }}
