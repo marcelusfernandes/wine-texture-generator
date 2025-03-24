@@ -5,9 +5,14 @@ const BatchEditDescription: React.FC = () => {
   return (
     <div className="mb-6">
       <p className="text-muted-foreground">
-        Manage multiple wine labels at once. Add, edit, duplicate, or remove labels from your collection.
-        You can also import labels from a CSV file.
+        Gerencie múltiplos rótulos de vinho de uma vez. Adicione, edite, duplique ou remova rótulos da sua coleção.
+        Você também pode importar rótulos de um arquivo CSV usando o formato indicado.
       </p>
+      <div className="mt-3 p-3 bg-muted/30 rounded-md text-xs">
+        <p className="font-medium mb-1">Formato CSV esperado:</p>
+        <p>Cabeçalhos: <code>label_name</code>, <code>grape_variety</code>, <code>origin</code>, <code>taste</code>, <code>closure_type</code></p>
+        <p className="mt-1">Os cabeçalhos antigos também são suportados para retrocompatibilidade.</p>
+      </div>
     </div>
   );
 };

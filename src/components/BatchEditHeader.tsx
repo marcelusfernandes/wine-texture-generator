@@ -1,10 +1,16 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CsvImportButton from '@/components/CsvImportButton';
 import { WineInfo } from '@/components/TextInputs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface BatchEditHeaderProps {
   onAddNew: () => void;
@@ -13,20 +19,37 @@ interface BatchEditHeaderProps {
 
 const BatchEditHeader: React.FC<BatchEditHeaderProps> = ({ onAddNew, onImport }) => {
   return (
-    <header className="flex items-center justify-between mb-8">
+    <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
       <div className="flex items-center gap-4">
         <Link to="/">
           <Button variant="outline" size="icon" className="h-9 w-9">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight">Batch Edit Wine Labels</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight">Gerenciar Rótulos de Vinho</h1>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>
+                  Nesta tela você pode gerenciar vários rótulos de vinho ao mesmo tempo.
+                  Você pode importar dados em massa usando um arquivo CSV.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
         <CsvImportButton onImport={onImport} />
         <Button onClick={onAddNew} className="gap-1">
           <Plus className="h-4 w-4" />
-          Add New Label
+          Novo Rótulo
         </Button>
       </div>
     </header>

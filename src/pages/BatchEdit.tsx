@@ -8,9 +8,9 @@ import WineLabelsTable from '@/components/WineLabelsTable';
 
 const defaultWineInfo: WineInfo = {
   type: 'Cabernet Sauvignon',
-  origin: 'France',
-  taste: 'Dry',
-  corkType: 'Cork'
+  origin: 'França',
+  taste: 'Seco',
+  corkType: 'Rolha'
 };
 
 interface WineLabel {
@@ -24,7 +24,7 @@ const BatchEdit = () => {
   const [labels, setLabels] = useState<WineLabel[]>([
     {
       id: '1',
-      name: 'Red Wine Label',
+      name: 'Rótulo de Vinho Tinto',
       imageUrl: null,
       wineInfo: { ...defaultWineInfo }
     }
@@ -34,20 +34,25 @@ const BatchEdit = () => {
     const newId = (Math.max(0, ...labels.map(label => parseInt(label.id))) + 1).toString();
     const newLabel: WineLabel = {
       id: newId,
-      name: `Wine Label ${newId}`,
+      name: `Rótulo de Vinho ${newId}`,
       imageUrl: null,
       wineInfo: { ...defaultWineInfo }
     };
     
     setLabels([...labels, newLabel]);
-    toast.success('New label added');
+    toast.success('Novo rótulo adicionado');
   };
   
   const handleCsvImport = (importedLabels: { name: string; wineInfo: WineInfo }[]) => {
-    // Get the next available ID
+    if (importedLabels.length === 0) {
+      toast.error('Nenhum dado válido encontrado no CSV');
+      return;
+    }
+    
+    // Obtém o próximo ID disponível
     let nextId = Math.max(0, ...labels.map(label => parseInt(label.id))) + 1;
     
-    // Create new wine labels from imported data
+    // Cria novos rótulos de vinho a partir dos dados importados
     const newLabels = importedLabels.map(imported => ({
       id: (nextId++).toString(),
       name: imported.name,
@@ -55,7 +60,7 @@ const BatchEdit = () => {
       wineInfo: imported.wineInfo
     }));
     
-    // Add new labels to existing ones
+    // Adiciona os novos rótulos aos existentes
     setLabels(prevLabels => [...prevLabels, ...newLabels]);
   };
 

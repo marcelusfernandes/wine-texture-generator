@@ -15,9 +15,10 @@ interface TextInputsProps {
   wineInfo: WineInfo;
   onChange: (info: WineInfo) => void;
   className?: string;
+  disabled?: boolean;
 }
 
-const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className }) => {
+const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className, disabled = false }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onChange({
@@ -29,53 +30,57 @@ const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className }
   return (
     <div className={cn("space-y-6 animate-fade-up", className)}>
       <div className="space-y-2">
-        <Label htmlFor="type">Grape Variety</Label>
+        <Label htmlFor="type">Tipo de Uva</Label>
         <Input
           id="type"
           name="type"
           value={wineInfo.type}
           onChange={handleChange}
-          placeholder="e.g., Cabernet Sauvignon"
+          placeholder="ex., Cabernet Sauvignon"
           className="transition-all focus:ring-2 focus:ring-primary/20"
+          disabled={disabled}
         />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="origin">Country of Origin</Label>
+        <Label htmlFor="origin">País de Origem</Label>
         <Input
           id="origin"
           name="origin"
           value={wineInfo.origin}
           onChange={handleChange}
-          placeholder="e.g., Argentina"
+          placeholder="ex., Argentina"
           className="transition-all focus:ring-2 focus:ring-primary/20"
+          disabled={disabled}
         />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="taste">Sweetness Level</Label>
+        <Label htmlFor="taste">Nível de Doçura</Label>
         <Input
           id="taste"
           name="taste"
           value={wineInfo.taste}
           onChange={handleChange}
-          placeholder="e.g., Dry"
+          placeholder="ex., Seco"
           className="transition-all focus:ring-2 focus:ring-primary/20"
+          disabled={disabled}
         />
         <p className="text-xs text-muted-foreground">
-          Note: Your input will be displayed on the left side of the label
+          Nota: Sua entrada será exibida no lado esquerdo do rótulo
         </p>
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="corkType">Closure Type</Label>
+        <Label htmlFor="corkType">Tipo de Tampa</Label>
         <Input
           id="corkType"
           name="corkType"
           value={wineInfo.corkType}
           onChange={handleChange}
-          placeholder="e.g., Cork"
+          placeholder="ex., Rolha"
           className="transition-all focus:ring-2 focus:ring-primary/20"
+          disabled={disabled}
         />
       </div>
     </div>
