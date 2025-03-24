@@ -15,20 +15,28 @@ export const processCsvFile = async (file: File): Promise<{
   wineInfo: WineInfo;
 }[]> => {
   try {
+    console.log('Iniciando processamento do arquivo CSV:', file.name);
     const rows = await parseCsvFile(file);
     
     if (rows.length === 0) {
       throw new Error('Nenhum dado válido encontrado no CSV');
     }
     
+    console.log(`Encontradas ${rows.length} linhas no CSV. Mapeando para rótulos de vinho...`);
+    
     // Mapeia e valida as linhas
     const mappedLabels = mapCsvRowsToWineLabels(rows);
+    
+    console.log(`${mappedLabels.length} rótulos foram mapeados do CSV`);
+    console.log('Amostra dos rótulos mapeados:', mappedLabels.slice(0, 2));
     
     const validLabels = mappedLabels
       .filter(item => validateWineInfo(item.wineInfo))
       .map(({name, wineInfo, imageUrl}) => {
         // Log final para confirmar os dados processados
-        console.log(`Rótulo final: ${name}, URL: ${imageUrl}`);
+        console.log(`Rótulo final processado: ${name}`);
+        console.log(`-> URL da imagem: ${imageUrl || 'Sem URL'}`);
+        console.log(`-> Tipo de uva: ${wineInfo.type}`);
         
         return {
           name,

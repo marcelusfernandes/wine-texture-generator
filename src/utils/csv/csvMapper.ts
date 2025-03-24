@@ -34,13 +34,23 @@ export const mapCsvRowsToWineLabels = (rows: CsvWineRow[]): {
     const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
     
     // Processa a URL da imagem
-    const imageUrl = row.image_url ? validateImageUrl(row.image_url) : null;
+    let imageUrl = null;
+    
+    if (row.image_url) {
+      console.log(`Encontrada URL no CSV para ${name}: ${row.image_url}`);
+      imageUrl = validateImageUrl(row.image_url);
+    } else if (row.imagem) {
+      console.log(`Encontrada URL alternativa no CSV para ${name}: ${row.imagem}`);
+      imageUrl = validateImageUrl(row.imagem);
+    } else {
+      console.log(`Nenhuma URL encontrada para ${name} no CSV`);
+    }
     
     // Log para depuração
     if (imageUrl) {
-      console.log(`Processando imageUrl para ${name}: ${imageUrl}`);
-    } else if (row.image_url) {
-      console.log(`URL inválida para ${name}: ${row.image_url}`);
+      console.log(`URL validada para ${name}: ${imageUrl}`);
+    } else {
+      console.log(`Sem URL válida para ${name}`);
     }
     
     return { 

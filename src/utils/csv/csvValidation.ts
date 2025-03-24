@@ -44,6 +44,7 @@ export const validateImageUrl = (url: string | undefined): string | null => {
   // Validate that it's a proper URL
   try {
     new URL(cleanUrl);
+    console.log(`URL válida encontrada: ${cleanUrl}`);
     return cleanUrl;
   } catch (error) {
     console.log(`Erro de análise da URL: ${cleanUrl}`);

@@ -39,6 +39,7 @@ const CsvImportButton: React.FC<CsvImportButtonProps> = ({ onImport, className }
         description: 'Analisando cabeçalhos e dados do arquivo.'
       });
       
+      console.log(`Iniciando processamento do arquivo: ${file.name} (${file.size} bytes)`);
       const wineLabels = await processCsvFile(file);
       
       if (wineLabels.length === 0) {
@@ -52,12 +53,22 @@ const CsvImportButton: React.FC<CsvImportButtonProps> = ({ onImport, className }
       // Log imported labels for debugging
       console.log('Rótulos de vinho importados:', wineLabels);
       
+      // Count how many have image URLs
+      const withImageUrls = wineLabels.filter(label => label.imageUrl !== null).length;
+      console.log(`${withImageUrls} de ${wineLabels.length} rótulos têm URLs de imagem`);
+      
       // Show a sample of what was imported
       const firstLabel = wineLabels[0];
       toast.success(`${wineLabels.length} rótulos de vinho importados com sucesso`, {
         description: `Amostra: "${firstLabel.name}" (Uva: ${firstLabel.wineInfo.type}, Origem: ${firstLabel.wineInfo.origin})`,
         duration: 5000
       });
+
+      if (withImageUrls > 0) {
+        toast.info(`${withImageUrls} rótulos contêm URLs de imagem`, {
+          description: 'As imagens serão carregadas se as URLs forem válidas e acessíveis.'
+        });
+      }
 
       onImport(wineLabels);
       

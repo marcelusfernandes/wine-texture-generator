@@ -56,7 +56,7 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
   };
 
   // Para diagnóstico - vamos logar os dados do rótulo
-  console.log(`Rótulo ${label.id}: ${label.name} - URL imagem: ${label.imageUrl}`);
+  console.log(`Renderizando rótulo ${label.id}: ${label.name} - URL imagem: ${label.imageUrl || 'SEM URL'}`);
 
   return (
     <TableRow>

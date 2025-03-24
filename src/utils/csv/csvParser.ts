@@ -61,7 +61,7 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           if (matchedHeader) {
             columnMap[index] = REQUIRED_HEADERS[matchedHeader];
             foundAtLeastOneRequiredHeader = true;
-            console.log(`Cabeçalho encontrado: ${header} (${matchedHeader}) na coluna ${index}`);
+            console.log(`Cabeçalho encontrado: ${header} (${matchedHeader}) na coluna ${index} -> mapeia para ${REQUIRED_HEADERS[matchedHeader]}`);
           } else {
             console.log(`Ignorando cabeçalho desconhecido: ${header} na coluna ${index}`);
           }
@@ -98,7 +98,13 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           Object.entries(columnMap).forEach(([columnIndex, fieldName]) => {
             const index = parseInt(columnIndex);
             if (index < values.length) {
-              rowData[fieldName] = values[index];
+              const value = values[index];
+              rowData[fieldName] = value;
+              
+              // Log especial para URLs de imagem
+              if (fieldName === 'image_url' && value) {
+                console.log(`CSV linha ${i}: encontrada URL da imagem = "${value}"`);
+              }
             }
           });
           
