@@ -22,11 +22,11 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           <img 
             src={imageUrl} 
             alt={alt}
-            crossOrigin="anonymous"
             className={cn(
               "h-10 w-10 object-cover rounded",
               isLoading && "opacity-0"
             )}
+            crossOrigin="anonymous" // Add cross-origin attribute
             onLoad={() => setIsLoading(false)}
             onError={() => {
               console.log(`Error loading thumbnail for "${alt}"`);

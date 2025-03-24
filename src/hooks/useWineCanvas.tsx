@@ -30,6 +30,8 @@ export const useWineCanvas = (imageUrl: string | null, wineInfo: WineInfo) => {
       setIsLoading(false);
       
       // Draw the wine label
+      canvas.width = CANVAS_CONFIG.width;
+      canvas.height = CANVAS_CONFIG.height;
       drawWineLabel(ctx, img, wineInfo);
     };
     
