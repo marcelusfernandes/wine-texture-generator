@@ -1,3 +1,4 @@
+
 /**
  * Utilidades para manipulação de arquivos CSV
  */
@@ -147,7 +148,7 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           if (!row) continue; // Pula linhas vazias
           
           // Divide a linha em valores, respeitando aspas (implementação simplificada)
-          const values = row.split(',').map(val => val.trim().replace(/^"(.*)"$/, '$1'));
+          const values = row.split(',').map(val => val.trim());
           
           // Só processa a linha se tiver valores suficientes
           if (values.length < 1) {
@@ -159,8 +160,14 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           // Só adiciona campos que temos interesse
           Object.entries(columnMap).forEach(([columnIndex, fieldName]) => {
             const index = parseInt(columnIndex);
-            if (index < values.length && values[index]) {
+            if (index < values.length) {
+              // Always add the value, even if empty
               rowData[fieldName] = values[index];
+              
+              // Log image URLs for debugging
+              if (fieldName === 'image_url' && values[index]) {
+                console.log(`Image URL encontrado: ${values[index]}`);
+              }
             }
           });
           
@@ -237,8 +244,14 @@ export const processCsvFile = async (file: File): Promise<{
         const wineInfo = mapCsvRowToWineInfo(row);
         // Usa o nome do label se disponível, senão usa nome antigo, ou gera um nome padrão
         const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
-        // Extrai a URL da imagem, se disponível
+        
+        // Extrai a URL da imagem, se disponível (sem remoção de aspas, isso será feito ao exibir)
         const imageUrl = row.image_url || null;
+        
+        // Log para depuração
+        if (imageUrl) {
+          console.log(`Processando imageUrl para ${name}: ${imageUrl}`);
+        }
         
         return { name, wineInfo, imageUrl, isValid: validateWineInfo(wineInfo) };
       })
