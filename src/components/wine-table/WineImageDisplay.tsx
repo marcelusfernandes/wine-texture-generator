@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Image as ImageIcon, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -15,50 +15,31 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const imgRef = useRef<HTMLImageElement>(null);
 
-  const captureAndDownloadImage = () => {
+  const handleImageClick = () => {
     if (!imageUrl || hasError) {
       toast.error("Não há imagem disponível para download");
       return;
     }
 
     try {
-      // If we have a reference to the loaded image
-      if (imgRef.current) {
-        // Create a canvas with the same dimensions as the image
-        const canvas = document.createElement('canvas');
-        canvas.width = imgRef.current.naturalWidth;
-        canvas.height = imgRef.current.naturalHeight;
-        
-        // Draw the image onto the canvas
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(imgRef.current, 0, 0);
-          
-          // Convert the canvas to a data URL and trigger download
-          try {
-            const dataUrl = canvas.toDataURL('image/png');
-            const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-            
-            // Create a download link
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            toast.success(`Imagem "${alt}" baixada com sucesso`);
-          } catch (e) {
-            console.error("Error generating data URL:", e);
-            toast.error("Não foi possível processar a imagem devido a restrições de segurança");
-          }
-        }
-      }
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      
+      // Extract filename from URL or use alt text
+      const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+      link.download = filename;
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success(`Imagem "${alt}" baixada com sucesso`);
     } catch (error) {
-      console.error("Error capturing image:", error);
-      toast.error("Erro ao processar a imagem");
+      console.error("Error downloading image:", error);
+      toast.error("Erro ao baixar a imagem");
     }
   };
 
@@ -67,11 +48,10 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
       {imageUrl && !hasError ? (
         <div 
           className="relative cursor-pointer group" 
-          onClick={captureAndDownloadImage}
+          onClick={handleImageClick}
           title="Clique para baixar a imagem"
         >
           <img 
-            ref={imgRef}
             src={imageUrl} 
             alt={alt}
             className={cn(
@@ -79,7 +59,6 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
               isLoading && "opacity-0"
             )}
             onLoad={() => setIsLoading(false)}
-            crossOrigin="anonymous"
             onError={() => {
               console.log(`Error loading thumbnail for "${alt}"`);
               setHasError(true);
