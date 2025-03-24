@@ -9,6 +9,7 @@ export interface WineInfo {
   origin: string;
   taste: string;
   corkType: string;
+  info_base?: string;
   imageUrl?: string | null;
 }
 
@@ -80,6 +81,19 @@ const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className, 
           value={wineInfo.corkType}
           onChange={handleChange}
           placeholder="ex., Rolha"
+          className="transition-all focus:ring-2 focus:ring-primary/20"
+          disabled={disabled}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="info_base">Informação Base</Label>
+        <Input
+          id="info_base"
+          name="info_base"
+          value={wineInfo.info_base || ''}
+          onChange={handleChange}
+          placeholder="ex., Notas frutadas"
           className="transition-all focus:ring-2 focus:ring-primary/20"
           disabled={disabled}
         />

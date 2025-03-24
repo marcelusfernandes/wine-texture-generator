@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { WineInfo } from '@/components/TextInputs';
@@ -10,7 +9,8 @@ const defaultWineInfo: WineInfo = {
   type: 'Cabernet Sauvignon',
   origin: 'França',
   taste: 'Seco',
-  corkType: 'Rolha'
+  corkType: 'Rolha',
+  info_base: ''
 };
 
 interface WineLabel {
@@ -49,12 +49,9 @@ const BatchEdit = () => {
       return;
     }
     
-    // Obtém o próximo ID disponível
     let nextId = Math.max(0, ...labels.map(label => parseInt(label.id))) + 1;
     
-    // Cria novos rótulos de vinho a partir dos dados importados
     const newLabels = importedLabels.map(imported => {
-      // Logs para depuração
       console.log(`Processando rótulo importado: ${imported.name}`);
       if (imported.imageUrl) {
         console.log(`Imagem URL para ${imported.name}: ${imported.imageUrl}`);
@@ -68,10 +65,8 @@ const BatchEdit = () => {
       };
     });
     
-    // Adiciona os novos rótulos aos existentes
     setLabels(prevLabels => [...prevLabels, ...newLabels]);
     
-    // Informa ao usuário sobre a importação
     toast.success(`${newLabels.length} rótulos importados com sucesso`, {
       description: 'Você pode editar os detalhes de cada rótulo individualmente.'
     });
