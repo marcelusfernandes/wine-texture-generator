@@ -30,7 +30,7 @@ const EditLabel = () => {
 
   const handleImageUpload = (file: File, preview: string) => {
     if (!isImageFile(file)) {
-      toast.error('Please upload a valid image file');
+      toast.error('Please upload a valid image file (JPG, PNG, GIF, WEBP)');
       return;
     }
     

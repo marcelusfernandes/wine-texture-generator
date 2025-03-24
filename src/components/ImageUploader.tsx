@@ -74,6 +74,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, className 
         <div>
           <p className="font-medium text-lg">Drag and drop your wine image</p>
           <p className="text-sm text-muted-foreground">or click to browse your files</p>
+          <p className="text-xs text-muted-foreground mt-1">Supported formats: JPG, PNG, GIF, WEBP</p>
         </div>
         <Button variant="secondary" className="mt-2">
           Select Image
@@ -83,7 +84,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, className 
         type="file"
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         onChange={handleFileInput}
-        accept="image/*"
+        accept="image/jpeg,image/png,image/gif,image/webp"
       />
     </div>
   );

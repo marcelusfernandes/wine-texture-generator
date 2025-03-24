@@ -9,7 +9,16 @@
  * @returns Boolean indicating if file is an image
  */
 export const isImageFile = (file: File): boolean => {
-  return file.type.startsWith('image/');
+  // Explicitly check for common image types including webp
+  const validTypes = [
+    'image/jpeg', 
+    'image/jpg', 
+    'image/png', 
+    'image/gif', 
+    'image/webp'
+  ];
+  
+  return validTypes.includes(file.type);
 };
 
 /**
