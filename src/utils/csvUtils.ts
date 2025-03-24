@@ -23,6 +23,34 @@ export interface CsvWineRow {
   [key: string]: string | undefined; // Permitir outras colunas
 }
 
+// Lista de cabeçalhos que queremos processar (novos e antigos)
+const REQUIRED_HEADERS = {
+  // Novos cabeçalhos
+  'label_name': 'label_name',
+  'grape_variety': 'grape_variety', 
+  'origin': 'origin',
+  'taste': 'taste',
+  'closure_type': 'closure_type',
+  
+  // Cabeçalhos legados para retrocompatibilidade
+  'nome': 'nome',
+  'name': 'nome',
+  'nome(tipo + uva + marca)': 'nome',
+  'nome (tipo + uva + marca)': 'nome',
+  'classificacao': 'classificacao',
+  'classificação': 'classificacao',
+  'sweetness': 'classificacao',
+  'uva': 'uva',
+  'grape': 'uva',
+  'grape variety': 'uva',
+  'pais': 'pais',
+  'país': 'pais',
+  'country': 'pais',
+  'tampa': 'tampa',
+  'closure': 'tampa',
+  'closure type': 'tampa'
+};
+
 /**
  * Analisa um arquivo CSV e retorna os dados como um array de objetos
  * @param file O arquivo CSV a ser analisado
@@ -61,42 +89,25 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         
         console.log('Cabeçalhos CSV detectados:', headers);
         
-        // Mapeia nomes de cabeçalhos normalizados para nossos campos esperados
-        const headerMap: { [key: string]: string } = {
-          // Mapeamentos de cabeçalhos novos
-          'label_name': 'label_name',
-          'grape_variety': 'grape_variety', 
-          'origin': 'origin',
-          'taste': 'taste',
-          'closure_type': 'closure_type',
-          
-          // Mapeamentos de cabeçalhos legados (mantidos para compatibilidade)
-          'nome': 'nome',
-          'name': 'nome',
-          'nome(tipo + uva + marca)': 'nome',
-          'nome (tipo + uva + marca)': 'nome',
-          'classificacao': 'classificacao',
-          'classificação': 'classificacao',
-          'sweetness': 'classificacao',
-          'uva': 'uva',
-          'grape': 'uva',
-          'grape variety': 'uva',
-          'pais': 'pais',
-          'país': 'pais',
-          'country': 'pais',
-          'tampa': 'tampa',
-          'closure': 'tampa',
-          'closure type': 'tampa'
-        };
+        // Mapeia os cabeçalhos do CSV para os nomes de campo que usamos
+        const columnMap: { [index: number]: string } = {};
+        let foundAtLeastOneRequiredHeader = false;
         
-        // Verifica se pelo menos um cabeçalho necessário foi encontrado
-        const foundHeaders = headers.filter(h => headerMap[h]);
-        if (foundHeaders.length === 0) {
-          reject(new Error('Nenhum cabeçalho reconhecido encontrado no CSV'));
+        headers.forEach((header, index) => {
+          if (REQUIRED_HEADERS[header]) {
+            columnMap[index] = REQUIRED_HEADERS[header];
+            foundAtLeastOneRequiredHeader = true;
+            console.log(`Cabeçalho encontrado: ${header} na coluna ${index}`);
+          }
+        });
+        
+        if (!foundAtLeastOneRequiredHeader) {
+          console.error('Nenhum dos cabeçalhos necessários foi encontrado');
+          reject(new Error('Nenhum cabeçalho reconhecido encontrado no CSV. Certifique-se de incluir pelo menos um dos seguintes: label_name/nome, grape_variety/uva, origin/pais, taste/classificacao, closure_type/tampa'));
           return;
         }
         
-        // Mapeia linhas CSV para objetos
+        // Mapeia linhas CSV para objetos, ignorando colunas que não nos interessam
         const data: CsvWineRow[] = [];
         
         for (let i = 1; i < rows.length; i++) {
@@ -106,17 +117,18 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           // Divide a linha em valores, respeitando aspas
           const values = row.split(',').map(val => val.trim().replace(/"/g, ''));
           
-          if (values.length < Math.max(1, foundHeaders.length - 2)) {
-            console.warn(`Linha ${i} ignorada: dados insuficientes`, values);
+          // Só processa a linha se tiver valores suficientes
+          if (values.length < 1) {
             continue;
           }
           
           const rowData: CsvWineRow = {};
           
-          headers.forEach((header, index) => {
-            const mappedHeader = headerMap[header];
-            if (mappedHeader && index < values.length) {
-              rowData[mappedHeader] = values[index];
+          // Só adiciona campos que temos interesse
+          Object.entries(columnMap).forEach(([columnIndex, fieldName]) => {
+            const index = parseInt(columnIndex);
+            if (index < values.length && values[index]) {
+              rowData[fieldName] = values[index];
             }
           });
           
@@ -195,6 +207,7 @@ export const processCsvFile = async (file: File): Promise<{
     const validLabels = rows
       .map(row => {
         const wineInfo = mapCsvRowToWineInfo(row);
+        // Usa o nome do label se disponível, senão usa nome antigo
         const name = row.label_name || row.nome || 'Vinho sem nome';
         
         return { name, wineInfo, isValid: validateWineInfo(wineInfo) };
