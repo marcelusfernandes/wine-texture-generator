@@ -78,6 +78,11 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
       <TableCell>{label.wineInfo.origin}</TableCell>
       <TableCell>{label.wineInfo.taste}</TableCell>
       <TableCell>{label.wineInfo.corkType}</TableCell>
+      <TableCell className="max-w-[200px] truncate">
+        <span className="text-xs text-muted-foreground" title={label.imageUrl || 'Sem URL'}>
+          {label.imageUrl || 'Sem URL'}
+        </span>
+      </TableCell>
       <TableCell className="text-right">
         <WineTableActions 
           id={label.id}
