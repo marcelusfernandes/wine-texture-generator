@@ -83,6 +83,41 @@ const BatchEdit = () => {
     return placeholderImg;
   };
 
+  const downloadSelectedImage = async () => {
+    if (selectedLabels.length !== 1) {
+      toast.error('Selecione apenas um rótulo para baixar a imagem');
+      return;
+    }
+
+    const labelId = selectedLabels[0];
+    const label = labels.find(l => l.id === labelId);
+    
+    if (!label) {
+      toast.error('Rótulo não encontrado');
+      return;
+    }
+
+    const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
+    if (!imageUrl) {
+      toast.error(`O rótulo "${label.name}" não possui imagem para baixar`);
+      return;
+    }
+
+    try {
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = `${label.name.toLowerCase().replace(/\s+/g, '-')}-imagem.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success(`Imagem do rótulo "${label.name}" baixada com sucesso`);
+    } catch (error) {
+      console.error('Erro ao baixar imagem:', error);
+      toast.error(`Erro ao baixar imagem: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
   const exportSelectedLabels = async () => {
     if (selectedLabels.length === 0) {
       toast.error('Selecione pelo menos um rótulo para exportar');
@@ -206,7 +241,9 @@ const BatchEdit = () => {
           onAddNew={addNewLabel} 
           onImport={handleCsvImport}
           onExport={exportSelectedLabels}
+          onDownloadImage={downloadSelectedImage}
           isExportDisabled={selectedLabels.length === 0}
+          isDownloadImageDisabled={selectedLabels.length !== 1}
         />
 
         <div className="bg-white rounded-xl shadow-md p-6 animate-fade-up">

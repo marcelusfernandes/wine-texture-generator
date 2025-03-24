@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, HelpCircle, Download } from 'lucide-react';
+import { ArrowLeft, Plus, HelpCircle, Download, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CsvImportButton from '@/components/CsvImportButton';
 import { WineInfo } from '@/components/TextInputs';
@@ -16,14 +16,18 @@ interface BatchEditHeaderProps {
   onAddNew: () => void;
   onImport: (labels: { name: string; wineInfo: WineInfo }[]) => void;
   onExport: () => void;
+  onDownloadImage: () => void;
   isExportDisabled: boolean;
+  isDownloadImageDisabled: boolean;
 }
 
 const BatchEditHeader: React.FC<BatchEditHeaderProps> = ({ 
   onAddNew, 
   onImport,
   onExport,
-  isExportDisabled
+  onDownloadImage,
+  isExportDisabled,
+  isDownloadImageDisabled
 }) => {
   return (
     <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
@@ -53,6 +57,15 @@ const BatchEditHeader: React.FC<BatchEditHeaderProps> = ({
         </div>
       </div>
       <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
+        <Button 
+          onClick={onDownloadImage} 
+          disabled={isDownloadImageDisabled}
+          variant="outline"
+          className="gap-1"
+        >
+          <Image className="h-4 w-4" />
+          Baixar Imagem
+        </Button>
         <Button 
           onClick={onExport} 
           disabled={isExportDisabled}

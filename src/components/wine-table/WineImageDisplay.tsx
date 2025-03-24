@@ -15,6 +15,9 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Log para diagnóstico
+  console.log(`[WineImageDisplay] Renderizando imagem para "${alt}" - URL: ${imageUrl || 'SEM URL'}`);
+
   return (
     <div className="flex items-center justify-center">
       {imageUrl && !hasError ? (
@@ -26,12 +29,16 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
               "h-10 w-10 object-cover rounded",
               isLoading && "opacity-0"
             )}
-            onLoad={() => setIsLoading(false)}
+            onLoad={() => {
+              console.log(`[WineImageDisplay] Imagem carregada com sucesso para "${alt}"`);
+              setIsLoading(false);
+            }}
             onError={() => {
-              console.log(`Error loading thumbnail for "${alt}"`);
+              console.log(`[WineImageDisplay] Erro ao carregar imagem para "${alt}"`);
               setHasError(true);
               setIsLoading(false);
             }}
+            crossOrigin="anonymous"
           />
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-muted rounded">
