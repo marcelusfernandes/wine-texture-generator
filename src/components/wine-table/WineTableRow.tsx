@@ -26,6 +26,7 @@ interface WineTableRowProps {
   setImageErrors: (fn: (prev: Record<string, boolean>) => Record<string, boolean>) => void;
   isSelected: boolean;
   onToggleSelect: () => void;
+  onSetEffectiveImageUrl?: (id: string, url: string | null) => void;
 }
 
 const WineTableRow: React.FC<WineTableRowProps> = ({
@@ -38,7 +39,8 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
   onDeleteCancel,
   setImageErrors,
   isSelected,
-  onToggleSelect
+  onToggleSelect,
+  onSetEffectiveImageUrl
 }) => {
   const handleNameUpdate = (newName: string) => {
     onUpdate(label.id, { name: newName });
@@ -56,10 +58,18 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
   // Determinar qual URL da imagem usar - primeiro tentar label.imageUrl, depois wineInfo.imageUrl
   const effectiveImageUrl = label.imageUrl || label.wineInfo.imageUrl || null;
 
+  // Update the parent component with effective image URL
+  useEffect(() => {
+    if (onSetEffectiveImageUrl) {
+      onSetEffectiveImageUrl(label.id, effectiveImageUrl);
+    }
+  }, [label.id, effectiveImageUrl, onSetEffectiveImageUrl]);
+
   // When the component mounts, test if the image can be loaded
   useEffect(() => {
     if (effectiveImageUrl) {
       const img = new Image();
+      img.crossOrigin = "anonymous";
       img.onload = () => {
         setImageErrors(prev => ({ ...prev, [label.id]: false }));
       };

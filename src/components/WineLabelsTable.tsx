@@ -23,13 +23,15 @@ interface WineLabelsTableProps {
   onUpdate: (updatedLabels: WineLabel[]) => void;
   selectedLabels: string[];
   onSelectionChange: (selectedIds: string[]) => void;
+  onSetEffectiveImageUrl?: (id: string, url: string | null) => void;
 }
 
 const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ 
   labels, 
   onUpdate,
   selectedLabels,
-  onSelectionChange
+  onSelectionChange,
+  onSetEffectiveImageUrl
 }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
@@ -118,6 +120,7 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({
               setImageErrors={setImageErrors}
               isSelected={selectedLabels.includes(label.id)}
               onToggleSelect={() => toggleLabelSelection(label.id)}
+              onSetEffectiveImageUrl={onSetEffectiveImageUrl}
             />
           ))}
         </TableBody>
