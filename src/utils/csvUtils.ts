@@ -80,13 +80,17 @@ const validateImageUrl = (url: string | undefined): string | null => {
     return null;
   }
   
+  // Log para diagnóstico
+  console.log(`Processando URL da imagem: ${cleanUrl}`);
+  
   // Try to ensure URL has protocol
   if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
     // If it looks like a domain (contains dots, no spaces), add https
     if (cleanUrl.includes('.') && !cleanUrl.includes(' ')) {
       cleanUrl = `https://${cleanUrl}`;
+      console.log(`URL corrigida com protocolo: ${cleanUrl}`);
     } else {
-      console.log(`URL without valid format: ${cleanUrl}`);
+      console.log(`URL sem formato válido: ${cleanUrl}`);
       return null;
     }
   }
@@ -96,7 +100,7 @@ const validateImageUrl = (url: string | undefined): string | null => {
     new URL(cleanUrl);
     return cleanUrl;
   } catch (error) {
-    console.log(`URL parsing error: ${cleanUrl}`);
+    console.log(`Erro de análise da URL: ${cleanUrl}`);
     return null;
   }
 };
@@ -281,7 +285,7 @@ export const processCsvFile = async (file: File): Promise<{
         // Usa o nome do label se disponível, senão usa nome antigo, ou gera um nome padrão
         const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
         
-        // Processa a URL da imagem - Aqui está a correção principal
+        // Processa a URL da imagem
         const imageUrl = row.image_url ? validateImageUrl(row.image_url) : null;
         
         // Log para depuração
@@ -299,11 +303,16 @@ export const processCsvFile = async (file: File): Promise<{
         };
       })
       .filter(item => item.isValid)
-      .map(({name, wineInfo, imageUrl}) => ({
-        name,
-        wineInfo,
-        imageUrl
-      }));
+      .map(({name, wineInfo, imageUrl}) => {
+        // Log final para confirmar os dados processados
+        console.log(`Rótulo final: ${name}, URL: ${imageUrl}`);
+        
+        return {
+          name,
+          wineInfo,
+          imageUrl
+        };
+      });
     
     console.log(`${validLabels.length} de ${rows.length} rótulos são válidos`);
     

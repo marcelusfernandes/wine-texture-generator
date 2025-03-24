@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Image, ExternalLink } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -18,6 +18,9 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   onImageError, 
   onViewImage 
 }) => {
+  // Para diagnóstico - vamos logar a URL da imagem
+  console.log(`WineImageDisplay recebeu URL: ${imageUrl}`);
+  
   if (!imageUrl) {
     return (
       <Avatar className="h-10 w-10">

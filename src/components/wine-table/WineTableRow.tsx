@@ -42,7 +42,7 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
 
   const handleImageError = () => {
     setImageErrors(prev => ({ ...prev, [label.id]: true }));
-    console.error(`❌ Falha ao carregar imagem para o rótulo ID: ${label.id}`);
+    console.error(`❌ Falha ao carregar imagem para o rótulo ID: ${label.id}, URL: ${label.imageUrl}`);
   };
 
   const handleViewImage = () => {
@@ -52,8 +52,11 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
     }
     
     console.log("Abrindo URL em nova aba:", label.imageUrl);
-    window.open(label.imageUrl, '_blank');
+    window.open(label.imageUrl, '_blank', 'noopener,noreferrer');
   };
+
+  // Para diagnóstico - vamos logar os dados do rótulo
+  console.log(`Rótulo ${label.id}: ${label.name} - URL imagem: ${label.imageUrl}`);
 
   return (
     <TableRow>
