@@ -100,3 +100,40 @@ export const resizeImage = (
     img.src = dataUrl;
   });
 };
+
+/**
+ * Tests if a URL can be loaded
+ * @param url URL to test
+ * @returns Promise that resolves if URL is valid and loadable
+ */
+export const testImageUrl = (url: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+    
+    // Set a timeout to prevent hanging on slow resources
+    setTimeout(() => resolve(false), 5000);
+  });
+};
+
+/**
+ * Decodes and cleans a URL with encoded parameters
+ * @param url The encoded URL to clean
+ * @returns Cleaned URL
+ */
+export const decodeComplexUrl = (url: string): string => {
+  try {
+    // For debugging
+    console.log("Original URL:", url);
+    
+    // Just return the URL as-is for now
+    // This will help us diagnose issues with complex URLs
+    return url;
+  } catch (error) {
+    console.error("Error decoding URL:", error);
+    return url;
+  }
+};
+

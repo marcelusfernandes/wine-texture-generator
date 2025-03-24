@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Copy, Edit, Trash2, Check, X, Image, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -28,6 +28,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface WineLabel {
   id: string;
@@ -51,13 +52,24 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
   // Track image loading errors
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   
-  // Estado para controlar o dialog de visualização da imagem
-  const [viewImageUrl, setViewImageUrl] = useState<string | null>(null);
+  // Estado para visualização de imagem com preview
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const startEditingName = (id: string, currentName: string) => {
     setEditingName(id);
     setNewName(currentName);
   };
+
+  // Debug: Log image URLs for inspection on component mount
+  useEffect(() => {
+    labels.forEach(label => {
+      if (label.imageUrl) {
+        console.log(`Original URL for label ${label.id}: ${label.imageUrl}`);
+        const processed = getCleanImageUrl(label.imageUrl);
+        console.log(`Processed URL: ${processed}`);
+      }
+    });
+  }, [labels]);
 
   const saveName = (id: string) => {
     if (!newName.trim()) {
@@ -110,62 +122,35 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
     console.log(`Image failed to load for label ID: ${id}`);
   };
   
-  // Function to view image in dialog
+  // Function to view image in preview popover
+  const previewImage = (url: string | null) => {
+    setPreviewImageUrl(url);
+  };
+  
+  // Function to view image in new tab
   const viewImage = (url: string | null) => {
     if (!url) {
       toast.error('Nenhuma imagem disponível para este rótulo');
       return;
     }
     
-    const cleanUrl = getCleanImageUrl(url);
-    if (!cleanUrl) {
-      toast.error('URL da imagem inválida');
-      return;
-    }
+    // Log the URL for debugging
+    console.log("Opening URL:", url);
     
-    // Open in a new tab
-    window.open(cleanUrl, '_blank');
+    // Open in a new tab without processing
+    window.open(url, '_blank');
   };
   
-  // Helper to clean image URL - Updated to handle complex URLs
+  // Helper to clean image URL for display in Avatar component
   const getCleanImageUrl = (url: string | null): string | null => {
     if (!url) return null;
     
-    // Remove quotes that might have been incorrectly parsed from CSV
-    let cleanUrl = url.replace(/^["']|["']$/g, '');
+    // For debugging purposes
+    console.log(`Processing URL: ${url}`);
     
-    // Check if it's just a number (probably mistaken for a URL)
-    if (/^\d+$/.test(cleanUrl)) {
-      console.log(`Invalid image URL detected (just numbers): ${cleanUrl}`);
-      return null;
-    }
-    
-    // Handle URL encoded characters - now accepting URLs with query params and encoded values
-    try {
-      // Check if the URL has a valid protocol
-      const hasProtocol = /^https?:\/\//i.test(cleanUrl);
-      
-      if (!hasProtocol) {
-        // If no protocol, check if it might be a valid partial URL that needs a protocol
-        if (cleanUrl.includes('.') && !cleanUrl.includes(' ')) {
-          // Add https protocol if it looks like a domain
-          console.log(`Adding protocol to URL: ${cleanUrl}`);
-          cleanUrl = `https://${cleanUrl}`;
-        } else {
-          console.log(`Invalid URL format (no protocol and not a domain): ${cleanUrl}`);
-          return null;
-        }
-      }
-      
-      // Validate the URL
-      new URL(cleanUrl);
-      
-      console.log(`Valid URL found: ${cleanUrl}`);
-      return cleanUrl;
-    } catch (error) {
-      console.log(`URL parsing error: ${cleanUrl}`, error);
-      return null;
-    }
+    // Return the URL as is - don't process it for now
+    // This will let us see what the actual URL data looks like
+    return url;
   };
 
   // Se não houver rótulos, mostra uma mensagem
@@ -195,19 +180,50 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
           {labels.map(label => (
             <TableRow key={label.id}>
               <TableCell>
-                <Avatar className="h-10 w-10">
-                  {getCleanImageUrl(label.imageUrl) && !imageErrors[label.id] ? (
-                    <AvatarImage 
-                      src={getCleanImageUrl(label.imageUrl)} 
-                      alt={label.name} 
-                      onError={() => handleImageError(label.id)}
-                    />
-                  ) : (
+                {label.imageUrl ? (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Avatar className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary">
+                        <AvatarImage 
+                          src={label.imageUrl} 
+                          alt={label.name} 
+                          onError={() => handleImageError(label.id)}
+                        />
+                        <AvatarFallback>
+                          <Image className="h-4 w-4 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0">
+                      {label.imageUrl && (
+                        <div className="relative">
+                          <img 
+                            src={label.imageUrl} 
+                            alt={label.name} 
+                            className="w-full h-auto max-h-64 object-contain"
+                            onError={() => handleImageError(label.id)}
+                          />
+                          <div className="absolute top-2 right-2">
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              onClick={() => viewImage(label.imageUrl)}
+                              className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <Avatar className="h-10 w-10">
                     <AvatarFallback>
                       <Image className="h-4 w-4 text-muted-foreground" />
                     </AvatarFallback>
-                  )}
-                </Avatar>
+                  </Avatar>
+                )}
               </TableCell>
               <TableCell>
                 {editingName === label.id ? (

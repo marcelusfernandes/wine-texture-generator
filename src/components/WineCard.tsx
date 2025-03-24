@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { WineInfo } from './TextInputs';
 
@@ -11,6 +11,7 @@ interface WineCardProps {
 
 const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current || !imageUrl) return;
@@ -19,10 +20,16 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Log the actual URL for debugging
+    console.log(`WineCard attempting to load image from: ${imageUrl}`);
+
     const img = new Image();
     img.crossOrigin = "anonymous"; // Add crossOrigin to handle CORS issues
     
     img.onload = () => {
+      // Reset error state if image loads successfully
+      setLoadError(false);
+      
       // Set canvas dimensions to 1080x1080 for the format requested
       canvas.width = 1080;
       canvas.height = 1080;
@@ -174,6 +181,11 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
     
     img.onerror = (err) => {
       console.error("Error loading image in WineCard:", err);
+      console.log("Failed URL:", imageUrl);
+      
+      // Set error state
+      setLoadError(true);
+      
       // Draw fallback/error state on canvas
       canvas.width = 1080;
       canvas.height = 1080;
@@ -183,18 +195,31 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.font = 'bold 32px Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('Error loading image', canvas.width / 2, canvas.height / 2);
+      ctx.font = 'normal 24px Arial, sans-serif';
+      ctx.fillText('URL may be invalid or inaccessible', canvas.width / 2, canvas.height / 2 + 40);
     };
     
+    // Use the raw URL without processing
     img.src = imageUrl;
   }, [imageUrl, wineInfo]);
 
   return (
     <div className={cn("relative rounded-xl overflow-hidden bg-white shadow-xl animate-fade-in", className)}>
       {imageUrl ? (
-        <canvas
-          ref={canvasRef}
-          className="w-full h-auto max-h-[600px] object-contain"
-        />
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            className="w-full h-auto max-h-[600px] object-contain"
+          />
+          {loadError && (
+            <div className="absolute inset-0 bg-muted bg-opacity-70 flex items-center justify-center">
+              <div className="text-center p-4">
+                <p className="text-muted-foreground">Failed to load image from URL:</p>
+                <p className="text-xs mt-2 break-all">{imageUrl}</p>
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="aspect-[1/1] bg-muted flex items-center justify-center p-6">
           <p className="text-muted-foreground text-center">Upload an image to preview</p>
