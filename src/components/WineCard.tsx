@@ -20,6 +20,8 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
     if (!ctx) return;
 
     const img = new Image();
+    img.crossOrigin = "anonymous"; // Add crossOrigin to handle CORS issues
+    
     img.onload = () => {
       // Set canvas dimensions to 1080x1080 for the format requested
       canvas.width = 1080;
@@ -168,6 +170,19 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.fillStyle = '#3F0E09';
       ctx.textAlign = 'center';
       ctx.fillText(wineInfo.origin.toUpperCase() || 'COUNTRY', 668 + 412 / 2, 708 + 210 + 18 + 56);
+    };
+    
+    img.onerror = (err) => {
+      console.error("Error loading image in WineCard:", err);
+      // Draw fallback/error state on canvas
+      canvas.width = 1080;
+      canvas.height = 1080;
+      ctx.fillStyle = '#f1f1f1';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#666';
+      ctx.font = 'bold 32px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Error loading image', canvas.width / 2, canvas.height / 2);
     };
     
     img.src = imageUrl;

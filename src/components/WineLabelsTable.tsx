@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Copy, Edit, Trash2, Check, X, Image } from 'lucide-react';
@@ -100,7 +99,7 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
     console.log(`Image failed to load for label ID: ${id}`);
   };
   
-  // Helper to clean image URL
+  // Helper to clean image URL - Updated to handle complex URLs
   const getCleanImageUrl = (url: string | null): string | null => {
     if (!url) return null;
     
@@ -113,14 +112,32 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
       return null;
     }
     
-    // If it doesn't start with http/https, assume it's a relative URL or invalid
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-      console.log(`URL without protocol detected: ${cleanUrl}`);
-      // For demo purposes, we could prepend a default domain, but better to return null
+    // Handle URL encoded characters - now accepting URLs with query params and encoded values
+    try {
+      // Check if the URL has a valid protocol
+      const hasProtocol = /^https?:\/\//i.test(cleanUrl);
+      
+      if (!hasProtocol) {
+        // If no protocol, check if it might be a valid partial URL that needs a protocol
+        if (cleanUrl.includes('.') && !cleanUrl.includes(' ')) {
+          // Add https protocol if it looks like a domain
+          console.log(`Adding protocol to URL: ${cleanUrl}`);
+          cleanUrl = `https://${cleanUrl}`;
+        } else {
+          console.log(`Invalid URL format (no protocol and not a domain): ${cleanUrl}`);
+          return null;
+        }
+      }
+      
+      // Validate the URL
+      new URL(cleanUrl);
+      
+      console.log(`Valid URL found: ${cleanUrl}`);
+      return cleanUrl;
+    } catch (error) {
+      console.log(`URL parsing error: ${cleanUrl}`, error);
       return null;
     }
-    
-    return cleanUrl;
   };
 
   // Se não houver rótulos, mostra uma mensagem

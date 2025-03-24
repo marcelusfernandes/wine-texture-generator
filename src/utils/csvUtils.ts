@@ -1,4 +1,3 @@
-
 /**
  * Utilidades para manipulação de arquivos CSV
  */
@@ -63,6 +62,42 @@ const normalizeText = (text: string): string => {
     .toLowerCase()
     .replace(/"/g, '') // Remove aspas
     .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remove acentos
+};
+
+/**
+ * Validate and clean an image URL
+ */
+const validateImageUrl = (url: string | undefined): string | null => {
+  if (!url || url.trim() === '') return null;
+  
+  // Remove quotes that might have been incorrectly parsed from CSV
+  let cleanUrl = url.trim().replace(/^["']|["']$/g, '');
+  
+  // Check if it's just a number (probably mistaken for a URL)
+  if (/^\d+$/.test(cleanUrl)) {
+    console.log(`Invalid image URL detected (just numbers): ${cleanUrl}`);
+    return null;
+  }
+  
+  // Try to ensure URL has protocol
+  if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+    // If it looks like a domain (contains dots, no spaces), add https
+    if (cleanUrl.includes('.') && !cleanUrl.includes(' ')) {
+      cleanUrl = `https://${cleanUrl}`;
+    } else {
+      console.log(`URL without valid format: ${cleanUrl}`);
+      return null;
+    }
+  }
+  
+  // Validate that it's a proper URL
+  try {
+    new URL(cleanUrl);
+    return cleanUrl;
+  } catch (error) {
+    console.log(`URL parsing error: ${cleanUrl}`);
+    return null;
+  }
 };
 
 /**
@@ -161,12 +196,11 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           Object.entries(columnMap).forEach(([columnIndex, fieldName]) => {
             const index = parseInt(columnIndex);
             if (index < values.length) {
-              // Always add the value, even if empty
-              rowData[fieldName] = values[index];
-              
-              // Log image URLs for debugging
-              if (fieldName === 'image_url' && values[index]) {
-                console.log(`Image URL encontrado: ${values[index]}`);
+              // Add special handling for image URL fields
+              if (fieldName === 'image_url') {
+                rowData[fieldName] = validateImageUrl(values[index]);
+              } else {
+                rowData[fieldName] = values[index];
               }
             }
           });
@@ -245,8 +279,8 @@ export const processCsvFile = async (file: File): Promise<{
         // Usa o nome do label se disponível, senão usa nome antigo, ou gera um nome padrão
         const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
         
-        // Extrai a URL da imagem, se disponível (sem remoção de aspas, isso será feito ao exibir)
-        const imageUrl = row.image_url || null;
+        // Validate and clean image URL
+        const imageUrl = validateImageUrl(row.image_url || null);
         
         // Log para depuração
         if (imageUrl) {
