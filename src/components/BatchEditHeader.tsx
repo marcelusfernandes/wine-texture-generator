@@ -1,74 +1,62 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, HelpCircle, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import CsvImportButton from '@/components/CsvImportButton';
-import { WineInfo } from '@/components/TextInputs';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Button } from './ui/button';
+import { Loader2, PlusCircle, Download } from 'lucide-react';
+import CsvImportButton from './CsvImportButton';
+import { WineInfo } from './TextInputs';
 
 interface BatchEditHeaderProps {
   onAddNew: () => void;
-  onImport: (labels: { name: string; wineInfo: WineInfo }[]) => void;
+  onImport: (importedLabels: { name: string; imageUrl: string | null; wineInfo: WineInfo }[]) => void;
   onExport: () => void;
   isExportDisabled: boolean;
+  isExporting?: boolean;
 }
 
 const BatchEditHeader: React.FC<BatchEditHeaderProps> = ({ 
   onAddNew, 
-  onImport,
+  onImport, 
   onExport,
-  isExportDisabled
+  isExportDisabled,
+  isExporting = false
 }) => {
   return (
-    <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-      <div className="flex items-center gap-4">
-        <Link to="/">
-          <Button variant="outline" size="icon" className="h-9 w-9">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">Gerenciar Rótulos de Vinho</h1>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>
-                  Nesta tela você pode gerenciar vários rótulos de vinho ao mesmo tempo.
-                  Você pode importar dados em massa usando um arquivo CSV.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+    <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Gestão de Rótulos</h1>
+        <p className="text-muted-foreground mt-1">
+          Gerencie múltiplos rótulos de vinhos em lote
+        </p>
       </div>
-      <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
-        <Button 
-          onClick={onExport} 
-          disabled={isExportDisabled}
-          variant="outline"
-          className="gap-1"
-        >
-          <Download className="h-4 w-4" />
-          Exportar Selecionados
-        </Button>
-        <CsvImportButton onImport={onImport} />
-        <Button onClick={onAddNew} className="gap-1">
-          <Plus className="h-4 w-4" />
+      
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={onAddNew} className="gap-2">
+          <PlusCircle size={16} />
           Novo Rótulo
         </Button>
+        
+        <CsvImportButton onImport={onImport} />
+        
+        <Button 
+          onClick={onExport} 
+          disabled={isExportDisabled} 
+          variant="outline" 
+          className="gap-2"
+        >
+          {isExporting ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Exportando...
+            </>
+          ) : (
+            <>
+              <Download size={16} />
+              Exportar Selecionados
+            </>
+          )}
+        </Button>
       </div>
-    </header>
+    </div>
   );
 };
 
