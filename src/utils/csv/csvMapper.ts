@@ -25,7 +25,7 @@ export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
     origin: rowData.origin || rowData.pais || 'Outra',
     taste: rowData.taste || rowData.classificacao || 'Seco',
     corkType: rowData.closure_type || rowData.tampa || 'Rolha',
-    imageUrl: imageUrl
+    imageUrl // Usando ES6 shorthand property notation (equivalente a imageUrl: imageUrl)
   };
 };
 
