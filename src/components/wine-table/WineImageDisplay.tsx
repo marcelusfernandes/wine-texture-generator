@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Image as ImageIcon, Download } from "lucide-react";
+import { Image as ImageIcon, Download, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { drawWineLabel } from "@/utils/canvasUtils";
@@ -16,13 +16,26 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [localImage, setLocalImage] = useState<string | null>(null);
 
   const handleImageClick = () => {
-    if (!imageUrl || hasError) {
-      toast.error("Não há imagem disponível para download");
+    // Se temos uma imagem local (que foi carregada pelo usuário), use-a diretamente
+    if (localImage) {
+      downloadImage(localImage);
       return;
     }
 
+    // Se não há imagem ou houve erro, exiba o seletor de arquivos
+    if (!imageUrl || hasError) {
+      document.getElementById(`file-upload-${alt}`)?.click();
+      return;
+    }
+
+    // Caso contrário, tente baixar a imagem remota
+    downloadImage(imageUrl);
+  };
+
+  const downloadImage = (imgSrc: string) => {
     try {
       // Create a temporary canvas to draw the image
       const canvas = document.createElement('canvas');
@@ -59,7 +72,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           const link = document.createElement('a');
           
           // Extract filename from URL or use alt text
-          const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+          const filename = imgSrc.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
           link.download = filename;
           link.href = blobUrl;
           
@@ -76,7 +89,15 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
       };
       
       img.onerror = () => {
-        console.error("Erro ao carregar imagem para exportação:", imageUrl);
+        console.error("Erro ao carregar imagem para exportação:", imgSrc);
+        
+        if (!localImage && imgSrc === imageUrl) {
+          toast.error("Erro ao carregar a imagem. Tente fazer upload manual.", {
+            description: "Clique novamente para selecionar um arquivo local."
+          });
+          setHasError(true);
+          return;
+        }
         
         // Alternative approach for CORS-restricted images
         // Create a new canvas to draw just a basic representation
@@ -109,7 +130,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
       };
       
       // Attempt to load the image
-      img.src = imageUrl;
+      img.src = imgSrc;
       
       // Timeout for slow-loading images
       setTimeout(() => {
@@ -124,20 +145,52 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      toast.error("Nenhum arquivo selecionado");
+      return;
+    }
+
+    // Verificar se é uma imagem
+    if (!file.type.startsWith('image/')) {
+      toast.error("Por favor, selecione um arquivo de imagem válido");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setLocalImage(result);
+        setHasError(false);
+        toast.success(`Imagem "${file.name}" carregada com sucesso`);
+      }
+    };
+    
+    reader.onerror = () => {
+      toast.error("Erro ao ler o arquivo de imagem");
+    };
+    
+    reader.readAsDataURL(file);
+  };
+
+  const effectiveImageUrl = localImage || imageUrl;
+
   return (
     <div className="flex items-center justify-center">
-      {imageUrl && !hasError ? (
+      {effectiveImageUrl && !hasError ? (
         <div 
           className="relative cursor-pointer group" 
           onClick={handleImageClick}
-          title="Clique para exportar a imagem"
+          title={localImage ? "Clique para exportar a imagem (carregada localmente)" : "Clique para exportar a imagem"}
         >
           <img 
-            src={imageUrl} 
+            src={effectiveImageUrl}
             alt={alt}
             className={cn(
               "h-10 w-10 object-cover rounded",
-              isLoading && "opacity-0"
+              isLoading && !localImage && "opacity-0"
             )}
             onLoad={() => setIsLoading(false)}
             onError={() => {
@@ -146,7 +199,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
               setIsLoading(false);
             }}
           />
-          {isLoading && (
+          {isLoading && !localImage && (
             <div className="absolute inset-0 flex items-center justify-center bg-muted rounded">
               <ImageIcon className="h-4 w-4 text-muted-foreground animate-pulse" />
             </div>
@@ -156,10 +209,27 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           </div>
         </div>
       ) : (
-        <div className="h-10 w-10 flex items-center justify-center bg-muted rounded">
-          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+        <div 
+          className="h-10 w-10 flex items-center justify-center bg-muted rounded cursor-pointer hover:bg-muted/80 transition-colors"
+          onClick={handleImageClick}
+          title="Clique para fazer upload de uma imagem"
+        >
+          {hasError ? (
+            <Upload className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+          )}
         </div>
       )}
+      
+      {/* Input de arquivo escondido */}
+      <input 
+        type="file"
+        id={`file-upload-${alt}`}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileUpload}
+      />
     </div>
   );
 };
