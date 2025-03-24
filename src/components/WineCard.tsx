@@ -63,28 +63,28 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       
       // Draw the sweetness text (vertically)
       ctx.save();
-      ctx.translate(84 + 24 + 50, 0 + 50);
+      ctx.translate(84 + 120, 587/2); // Center horizontally in the burgundy box and vertically
       ctx.rotate(-Math.PI / 2);
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle'; // Center text vertically relative to the rotation point
       ctx.font = 'bold 110px "Arial Rounded MT Bold", Arial, sans-serif';
       ctx.fillStyle = 'white';
-      // Calculate text width to center it properly
+      // Use the sweetness text from wineInfo, uppercase and use a placeholder if empty
       const sweetText = wineInfo.taste.toUpperCase() || 'SWEET';
-      const textWidth = ctx.measureText(sweetText).width;
-      ctx.fillText(sweetText, -textWidth / 2, 0);
+      ctx.fillText(sweetText, 0, 0); // Center the text at the rotation point
       ctx.restore();
       
       // Draw the grape variety text (vertically)
       ctx.save();
-      ctx.translate(109 + 24 + 48, 587 + 48);
+      ctx.translate(109 + 95, 587 + 492/2); // Center horizontally in the gray box and vertically
       ctx.rotate(-Math.PI / 2);
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle'; // Center text vertically relative to the rotation point
       ctx.font = 'bold 62px "Arial Rounded MT Bold", Arial, sans-serif';
       ctx.fillStyle = 'white';
-      // Calculate text width to center it properly
+      // Use the grape variety text from wineInfo, uppercase and use a placeholder if empty
       const grapeText = wineInfo.type.toUpperCase() || 'GRAPE VARIETY';
-      const grapeTextWidth = ctx.measureText(grapeText).width;
-      ctx.fillText(grapeText, -grapeTextWidth / 2, 0);
+      ctx.fillText(grapeText, 0, 0); // Center the text at the rotation point
       ctx.restore();
       
       // Draw the closure type icon (top right)
