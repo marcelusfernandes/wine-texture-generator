@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Image as ImageIcon, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { drawWineLabel } from "@/utils/canvasUtils";
 
 interface WineImageDisplayProps {
   imageUrl: string | null;
@@ -23,37 +24,103 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
     }
 
     try {
-      fetch(imageUrl)
-        .then(response => response.blob())
-        .then(blob => {
-          // Create object URL for the blob
-          const blobUrl = window.URL.createObjectURL(blob);
-          
-          // Create temporary link for download
+      // Create a temporary canvas to draw the image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        toast.error("Não foi possível criar o contexto de canvas");
+        return;
+      }
+
+      // Set initial canvas size (will be adjusted when image loads)
+      canvas.width = 500;
+      canvas.height = 500;
+
+      const img = new Image();
+      img.crossOrigin = "anonymous"; // Try to handle CORS
+      
+      img.onload = () => {
+        // Resize canvas to match the loaded image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw image to canvas
+        ctx.drawImage(img, 0, 0);
+        
+        // Convert canvas to blob and download
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            toast.error("Erro ao converter a imagem");
+            return;
+          }
+
+          // Create download link
+          const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement('a');
-          link.href = blobUrl;
           
           // Extract filename from URL or use alt text
           const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
           link.download = filename;
+          link.href = blobUrl;
           
-          // Append to body, click, and remove
+          // Trigger download
           document.body.appendChild(link);
           link.click();
           
           // Clean up
-          window.URL.revokeObjectURL(blobUrl);
+          URL.revokeObjectURL(blobUrl);
           document.body.removeChild(link);
           
-          toast.success(`Imagem "${alt}" baixada com sucesso`);
-        })
-        .catch(error => {
-          console.error("Error downloading image:", error);
-          toast.error("Erro ao baixar a imagem");
-        });
+          toast.success(`Imagem "${alt}" exportada com sucesso`);
+        }, 'image/png');
+      };
+      
+      img.onerror = () => {
+        console.error("Erro ao carregar imagem para exportação:", imageUrl);
+        
+        // Alternative approach for CORS-restricted images
+        // Create a new canvas to draw just a basic representation
+        ctx.fillStyle = '#f5f5f5';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#666';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Imagem não disponível devido a restrições de CORS', canvas.width/2, canvas.height/2);
+        
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            toast.error("Erro ao gerar a imagem alternativa");
+            return;
+          }
+          
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+          link.href = blobUrl;
+          
+          document.body.appendChild(link);
+          link.click();
+          
+          URL.revokeObjectURL(blobUrl);
+          document.body.removeChild(link);
+          
+          toast.warning(`Exportada versão alternativa da imagem devido a restrições de CORS`);
+        }, 'image/png');
+      };
+      
+      // Attempt to load the image
+      img.src = imageUrl;
+      
+      // Timeout for slow-loading images
+      setTimeout(() => {
+        if (!img.complete) {
+          img.src = ''; // Cancel the image load
+          toast.error("Tempo esgotado ao tentar carregar a imagem");
+        }
+      }, 10000);
     } catch (error) {
-      console.error("Error initiating download:", error);
-      toast.error("Erro ao iniciar o download da imagem");
+      console.error("Error initiating export:", error);
+      toast.error("Erro ao iniciar a exportação da imagem");
     }
   };
 
@@ -63,7 +130,7 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
         <div 
           className="relative cursor-pointer group" 
           onClick={handleImageClick}
-          title="Clique para baixar a imagem"
+          title="Clique para exportar a imagem"
         >
           <img 
             src={imageUrl} 
