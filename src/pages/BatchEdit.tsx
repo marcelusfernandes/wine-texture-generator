@@ -43,7 +43,7 @@ const BatchEdit = () => {
     toast.success('Novo rótulo adicionado');
   };
   
-  const handleCsvImport = (importedLabels: { name: string; wineInfo: WineInfo }[]) => {
+  const handleCsvImport = (importedLabels: { name: string; imageUrl: string | null; wineInfo: WineInfo }[]) => {
     if (importedLabels.length === 0) {
       toast.error('Nenhum dado válido encontrado no CSV');
       return;
@@ -56,7 +56,7 @@ const BatchEdit = () => {
     const newLabels = importedLabels.map(imported => ({
       id: (nextId++).toString(),
       name: imported.name,
-      imageUrl: null,
+      imageUrl: imported.imageUrl,
       wineInfo: imported.wineInfo
     }));
     

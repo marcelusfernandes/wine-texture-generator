@@ -24,6 +24,7 @@ const BatchEditDescription: React.FC = () => {
             <li><code>origin</code> ou <code>pais</code> - Origem do vinho</li>
             <li><code>taste</code> ou <code>classificacao</code> - Sabor do vinho</li>
             <li><code>closure_type</code> ou <code>tampa</code> - Tipo de tampa</li>
+            <li><code>image_url</code> ou <code>imagem</code> - URL da imagem do rótulo (opcional)</li>
           </ul>
           <p className="text-sm mt-2">
             Quaisquer outras colunas no arquivo serão ignoradas. Certifique-se de que a primeira linha contém

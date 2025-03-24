@@ -1,4 +1,3 @@
-
 /**
  * Utilidades para manipulação de arquivos CSV
  */
@@ -12,6 +11,7 @@ export interface CsvWineRow {
   origin?: string;           // Cabeçalho novo: origin
   taste?: string;            // Cabeçalho novo: taste
   closure_type?: string;     // Cabeçalho novo: closure_type
+  image_url?: string;        // Cabeçalho para URL da imagem
   
   // Manter os cabeçalhos antigos para retrocompatibilidade
   nome?: string;
@@ -31,6 +31,7 @@ const REQUIRED_HEADERS = {
   'origin': 'origin',
   'taste': 'taste',
   'closure_type': 'closure_type',
+  'image_url': 'image_url',
   
   // Cabeçalhos legados para retrocompatibilidade
   'nome': 'nome',
@@ -48,7 +49,9 @@ const REQUIRED_HEADERS = {
   'country': 'pais',
   'tampa': 'tampa',
   'closure': 'tampa',
-  'closure type': 'tampa'
+  'closure type': 'tampa',
+  'imagem': 'image_url',
+  'image': 'image_url'
 };
 
 /**
@@ -129,7 +132,7 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         if (!foundAtLeastOneRequiredHeader) {
           console.error('Nenhum dos cabeçalhos necessários foi encontrado');
           const headersList = Object.keys(REQUIRED_HEADERS)
-            .filter(h => ['label_name', 'nome', 'grape_variety', 'uva', 'origin', 'pais', 'taste', 'classificacao', 'closure_type', 'tampa'].includes(h))
+            .filter(h => ['label_name', 'nome', 'grape_variety', 'uva', 'origin', 'pais', 'taste', 'classificacao', 'closure_type', 'tampa', 'image_url'].includes(h))
             .join(', ');
             
           reject(new Error(`Nenhum cabeçalho reconhecido encontrado no CSV. O arquivo deve ter pelo menos um destes cabeçalhos: ${headersList}`));
@@ -218,6 +221,7 @@ export const validateWineInfo = (wineInfo: WineInfo): boolean => {
  */
 export const processCsvFile = async (file: File): Promise<{
   name: string;
+  imageUrl: string | null;
   wineInfo: WineInfo;
 }[]> => {
   try {
@@ -233,11 +237,13 @@ export const processCsvFile = async (file: File): Promise<{
         const wineInfo = mapCsvRowToWineInfo(row);
         // Usa o nome do label se disponível, senão usa nome antigo, ou gera um nome padrão
         const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
+        // Extrai a URL da imagem, se disponível
+        const imageUrl = row.image_url || null;
         
-        return { name, wineInfo, isValid: validateWineInfo(wineInfo) };
+        return { name, wineInfo, imageUrl, isValid: validateWineInfo(wineInfo) };
       })
       .filter(item => item.isValid)
-      .map(({name, wineInfo}) => ({name, wineInfo}));
+      .map(({name, wineInfo, imageUrl}) => ({name, wineInfo, imageUrl}));
     
     console.log(`${validLabels.length} de ${rows.length} rótulos são válidos`);
     

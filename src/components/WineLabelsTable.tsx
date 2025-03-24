@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Copy, Edit, Trash2, Check, X } from 'lucide-react';
+import { Copy, Edit, Trash2, Check, X, Image } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { WineInfo } from '@/components/TextInputs';
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface WineLabel {
   id: string;
@@ -105,7 +106,8 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[250px]">Nome do Rótulo</TableHead>
+            <TableHead className="w-[50px]">Imagem</TableHead>
+            <TableHead className="w-[200px]">Nome do Rótulo</TableHead>
             <TableHead>Tipo de Uva</TableHead>
             <TableHead>Origem</TableHead>
             <TableHead>Sabor</TableHead>
@@ -116,6 +118,17 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
         <TableBody>
           {labels.map(label => (
             <TableRow key={label.id}>
+              <TableCell>
+                <Avatar className="h-10 w-10">
+                  {label.imageUrl ? (
+                    <AvatarImage src={label.imageUrl} alt={label.name} />
+                  ) : (
+                    <AvatarFallback>
+                      <Image className="h-4 w-4 text-muted-foreground" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </TableCell>
               <TableCell>
                 {editingName === label.id ? (
                   <div className="flex gap-2">
