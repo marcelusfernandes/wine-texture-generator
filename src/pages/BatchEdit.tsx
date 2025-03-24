@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { WineInfo } from '@/components/TextInputs';
@@ -33,6 +34,7 @@ const BatchEdit = () => {
   
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [processingExport, setProcessingExport] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const addNewLabel = () => {
@@ -79,7 +81,7 @@ const BatchEdit = () => {
 
   const getPlaceholderImage = (): HTMLImageElement => {
     const placeholderImg = new Image();
-    placeholderImg.src = '/placeholder.svg';
+    placeholderImg.src = '/lovable-uploads/5249d4d0-9a56-4a39-9f44-5d715dc9925a.png';
     return placeholderImg;
   };
 
@@ -95,11 +97,13 @@ const BatchEdit = () => {
       return;
     }
 
+    setProcessingExport(true);
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       console.error('Could not get canvas context');
       toast.error('Erro ao preparar exportação');
+      setProcessingExport(false);
       return;
     }
 
@@ -111,7 +115,38 @@ const BatchEdit = () => {
       if (!label) continue;
 
       if (imageErrors[labelId]) {
-        toast.error(`Rótulo "${label.name}" possui erro na imagem e não pode ser exportado`);
+        // Se houver erro na imagem, use a imagem de amostra local
+        console.log(`Usando imagem local para "${label.name}" devido a erros CORS`);
+        const placeholderImg = getPlaceholderImage();
+        
+        try {
+          // Verificar se a imagem de amostra carregou
+          await new Promise<void>((resolve, reject) => {
+            placeholderImg.onload = () => resolve();
+            placeholderImg.onerror = () => reject(new Error('Erro ao carregar imagem local'));
+            
+            // Se a imagem já estiver carregada, resolva imediatamente
+            if (placeholderImg.complete) resolve();
+          });
+          
+          // Desenhar a etiqueta com a imagem local
+          drawWineLabel(ctx, placeholderImg, label.wineInfo);
+          
+          // Exportar a imagem
+          const link = document.createElement('a');
+          const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+          
+          link.download = filename;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          exportCount++;
+        } catch (error) {
+          console.error(`Erro ao usar imagem local para "${label.name}":`, error);
+          toast.error(`Erro ao processar "${label.name}". Tente fazer upload manual de uma imagem.`);
+        }
         continue;
       }
 
@@ -128,7 +163,7 @@ const BatchEdit = () => {
           
           const timeoutId = setTimeout(() => {
             console.log(`Timeout loading image for "${label.name}"`);
-            toast.warning(`Tempo esgotado ao carregar imagem para "${label.name}". Usando imagem padrão.`);
+            toast.warning(`Tempo esgotado ao carregar imagem para "${label.name}". Usando imagem local.`);
             
             const placeholderImg = getPlaceholderImage();
             drawWineLabel(ctx, placeholderImg, label.wineInfo);
@@ -168,7 +203,7 @@ const BatchEdit = () => {
           img.onerror = () => {
             clearTimeout(timeoutId);
             console.error(`Error loading image for label "${label.name}" from URL: ${imageUrl}`);
-            toast.warning(`Erro ao carregar imagem para "${label.name}". Usando imagem padrão.`);
+            toast.warning(`Erro ao carregar imagem para "${label.name}". Usando imagem local.`);
             
             const placeholderImg = getPlaceholderImage();
             drawWineLabel(ctx, placeholderImg, label.wineInfo);
@@ -194,6 +229,7 @@ const BatchEdit = () => {
       }
     }
 
+    setProcessingExport(false);
     if (exportCount > 0) {
       toast.success(`${exportCount} de ${totalToExport} rótulos exportados com sucesso`);
     }
@@ -206,7 +242,7 @@ const BatchEdit = () => {
           onAddNew={addNewLabel} 
           onImport={handleCsvImport}
           onExport={exportSelectedLabels}
-          isExportDisabled={selectedLabels.length === 0}
+          isExportDisabled={selectedLabels.length === 0 || processingExport}
         />
 
         <div className="bg-white rounded-xl shadow-md p-6 animate-fade-up">

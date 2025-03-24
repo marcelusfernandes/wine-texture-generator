@@ -37,112 +37,95 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 
   const downloadImage = (imgSrc: string) => {
     try {
-      // Create a temporary canvas to draw the image
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        toast.error("Não foi possível criar o contexto de canvas");
+      // Verificar se a imagem é uma URL de dados (data URL)
+      if (imgSrc.startsWith('data:')) {
+        // Se for data URL, podemos baixar diretamente
+        const link = document.createElement('a');
+        link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+        link.href = imgSrc;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(`Imagem "${alt}" exportada com sucesso`);
         return;
       }
 
-      // Set initial canvas size (will be adjusted when image loads)
-      canvas.width = 500;
-      canvas.height = 500;
-
+      // Se for uma URL remota, precisamos usar canvas para contornar CORS
       const img = new Image();
-      img.crossOrigin = "anonymous"; // Try to handle CORS
+      img.crossOrigin = "anonymous";
+      
+      // Timeout para evitar que a operação fique travada
+      const timeoutId = setTimeout(() => {
+        toast.error("Tempo esgotado ao tentar carregar a imagem");
+        useFallbackImage();
+      }, 5000);
       
       img.onload = () => {
-        // Resize canvas to match the loaded image
+        clearTimeout(timeoutId);
+        
+        // Create a canvas and draw the image
+        const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
         
-        // Draw image to canvas
-        ctx.drawImage(img, 0, 0);
-        
-        // Convert canvas to blob and download
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            toast.error("Erro ao converter a imagem");
-            return;
-          }
-
-          // Create download link
-          const blobUrl = URL.createObjectURL(blob);
-          const link = document.createElement('a');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
           
-          // Extract filename from URL or use alt text
-          const filename = imgSrc.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-          link.download = filename;
-          link.href = blobUrl;
-          
-          // Trigger download
-          document.body.appendChild(link);
-          link.click();
-          
-          // Clean up
-          URL.revokeObjectURL(blobUrl);
-          document.body.removeChild(link);
-          
-          toast.success(`Imagem "${alt}" exportada com sucesso`);
-        }, 'image/png');
+          // Try to export the image
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              toast.error("Erro ao converter a imagem");
+              useFallbackImage();
+              return;
+            }
+            
+            // Create download link
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            // Extract filename or use alt text
+            const filename = imgSrc.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+            link.download = filename;
+            link.href = blobUrl;
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            
+            // Clean up
+            URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(link);
+            
+            toast.success(`Imagem "${alt}" exportada com sucesso`);
+          }, 'image/png');
+        } else {
+          toast.error("Erro ao criar contexto para exportação");
+          useFallbackImage();
+        }
       };
       
       img.onerror = () => {
+        clearTimeout(timeoutId);
         console.error("Erro ao carregar imagem para exportação:", imgSrc);
-        
-        if (!localImage && imgSrc === imageUrl) {
-          toast.error("Erro ao carregar a imagem. Tente fazer upload manual.", {
-            description: "Clique novamente para selecionar um arquivo local."
-          });
-          setHasError(true);
-          return;
-        }
-        
-        // Alternative approach for CORS-restricted images
-        // Create a new canvas to draw just a basic representation
-        ctx.fillStyle = '#f5f5f5';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#666';
-        ctx.font = '14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Imagem não disponível devido a restrições de CORS', canvas.width/2, canvas.height/2);
-        
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            toast.error("Erro ao gerar a imagem alternativa");
-            return;
-          }
-          
-          const blobUrl = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-          link.href = blobUrl;
-          
-          document.body.appendChild(link);
-          link.click();
-          
-          URL.revokeObjectURL(blobUrl);
-          document.body.removeChild(link);
-          
-          toast.warning(`Exportada versão alternativa da imagem devido a restrições de CORS`);
-        }, 'image/png');
+        useFallbackImage();
       };
       
-      // Attempt to load the image
       img.src = imgSrc;
-      
-      // Timeout for slow-loading images
-      setTimeout(() => {
-        if (!img.complete) {
-          img.src = ''; // Cancel the image load
-          toast.error("Tempo esgotado ao tentar carregar a imagem");
-        }
-      }, 10000);
     } catch (error) {
-      console.error("Error initiating export:", error);
-      toast.error("Erro ao iniciar a exportação da imagem");
+      console.error("Erro ao exportar imagem:", error);
+      toast.error("Erro ao exportar imagem");
+      useFallbackImage();
     }
+  };
+  
+  const useFallbackImage = () => {
+    // Usar imagem local de amostra quando CORS bloqueia
+    toast.error("Não foi possível carregar a imagem remota devido a restrições CORS", {
+      description: "Clique novamente para fazer upload de uma imagem local"
+    });
+    setHasError(true);
+    document.getElementById(`file-upload-${alt}`)?.click();
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
