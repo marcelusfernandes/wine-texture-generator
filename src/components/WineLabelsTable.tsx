@@ -21,9 +21,16 @@ interface WineLabel {
 interface WineLabelsTableProps {
   labels: WineLabel[];
   onUpdate: (updatedLabels: WineLabel[]) => void;
+  selectedLabels: string[];
+  onSelectionChange: (selectedIds: string[]) => void;
 }
 
-const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) => {
+const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ 
+  labels, 
+  onUpdate,
+  selectedLabels,
+  onSelectionChange
+}) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
@@ -66,6 +73,14 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
     toast.success('Rótulo excluído');
   };
 
+  const toggleLabelSelection = (id: string) => {
+    const newSelectedLabels = selectedLabels.includes(id)
+      ? selectedLabels.filter(labelId => labelId !== id)
+      : [...selectedLabels, id];
+    
+    onSelectionChange(newSelectedLabels);
+  };
+
   if (labels.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -79,6 +94,7 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]"></TableHead>
             <TableHead className="w-[200px]">URL da Imagem</TableHead>
             <TableHead className="w-[200px]">Nome do Rótulo</TableHead>
             <TableHead>Tipo de Uva</TableHead>
@@ -100,6 +116,8 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
               onDeleteConfirm={deleteLabel}
               onDeleteCancel={cancelDelete}
               setImageErrors={setImageErrors}
+              isSelected={selectedLabels.includes(label.id)}
+              onToggleSelect={() => toggleLabelSelection(label.id)}
             />
           ))}
         </TableBody>

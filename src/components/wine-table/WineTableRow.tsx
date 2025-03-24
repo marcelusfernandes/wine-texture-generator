@@ -2,6 +2,7 @@
 import React from "react";
 import { toast } from "sonner";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { WineInfo } from "@/components/TextInputs";
 import EditableName from "./EditableName";
 import WineImageDisplay from "./WineImageDisplay";
@@ -23,6 +24,8 @@ interface WineTableRowProps {
   onDeleteConfirm: (id: string) => void;
   onDeleteCancel: () => void;
   setImageErrors: (fn: (prev: Record<string, boolean>) => Record<string, boolean>) => void;
+  isSelected: boolean;
+  onToggleSelect: () => void;
 }
 
 const WineTableRow: React.FC<WineTableRowProps> = ({
@@ -33,7 +36,9 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
   onDeleteRequest,
   onDeleteConfirm,
   onDeleteCancel,
-  setImageErrors
+  setImageErrors,
+  isSelected,
+  onToggleSelect
 }) => {
   const handleNameUpdate = (newName: string) => {
     onUpdate(label.id, { name: newName });
@@ -53,6 +58,13 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
 
   return (
     <TableRow>
+      <TableCell className="px-4">
+        <Checkbox 
+          checked={isSelected} 
+          onCheckedChange={onToggleSelect}
+          aria-label={`Selecionar ${label.name}`}
+        />
+      </TableCell>
       <TableCell>
         <WineImageDisplay 
           imageUrl={effectiveImageUrl} 
