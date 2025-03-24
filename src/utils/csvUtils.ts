@@ -45,6 +45,7 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         'nome': 'nome',
         'name': 'nome',
         'nome(tipo + uva + marca)': 'nome',
+        'nome (tipo + uva + marca)': 'nome', // Added with space
         'classificacao': 'classificacao',
         'classificação': 'classificacao',
         'sweetness': 'classificacao',
@@ -58,6 +59,8 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         'closure': 'tampa',
         'closure type': 'tampa'
       };
+      
+      console.log('CSV Headers:', headers);
       
       // Map CSV rows to objects
       const data: CsvWineRow[] = [];
@@ -75,6 +78,7 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           }
         });
         
+        console.log('Parsed row:', rowData);
         data.push(rowData);
       }
       

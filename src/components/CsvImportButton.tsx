@@ -39,6 +39,15 @@ const CsvImportButton: React.FC<CsvImportButtonProps> = ({ onImport, className }
         return;
       }
 
+      console.log('Imported wine labels:', wineLabels);
+      
+      // Show a sample of what was imported
+      const firstLabel = wineLabels[0];
+      toast.info(
+        `Sample data: "${firstLabel.name}" (${firstLabel.wineInfo.type}, ${firstLabel.wineInfo.origin})`,
+        { duration: 5000 }
+      );
+
       onImport(wineLabels);
       toast.success(`Successfully imported ${wineLabels.length} wine labels`);
       
