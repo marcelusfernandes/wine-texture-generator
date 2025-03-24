@@ -19,13 +19,12 @@ export const useWineCanvas = (imageUrl: string | null, wineInfo: WineInfo) => {
     setLoadError(false);
 
     // Log the actual URL for debugging
-    console.log(`useWineCanvas attempting to load image from: ${imageUrl}`);
+    console.log(`WineCard attempting to load image from: ${imageUrl}`);
 
     const img = new Image();
-    img.crossOrigin = "anonymous"; // Set crossOrigin for CORS
+    img.crossOrigin = "anonymous"; // Add crossOrigin to handle CORS issues
     
     img.onload = () => {
-      console.log(`Image loaded successfully in useWineCanvas: ${imageUrl}`);
       // Reset error state if image loads successfully
       setLoadError(false);
       setIsLoading(false);
@@ -35,7 +34,7 @@ export const useWineCanvas = (imageUrl: string | null, wineInfo: WineInfo) => {
     };
     
     img.onerror = (err) => {
-      console.error("Error loading image in useWineCanvas:", err);
+      console.error("Error loading image in WineCard:", err);
       console.log("Failed URL:", imageUrl);
       
       // Set error state
