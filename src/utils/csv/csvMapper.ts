@@ -8,20 +8,20 @@ import { CsvWineRow } from "./csvTypes";
  * @returns Objeto WineInfo com valores mapeados
  */
 export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
-  // Log detalhado para depuração do campo info_base
-  if (rowData.info_base) {
-    console.log(`[CSV Mapper] info_base original: "${rowData.info_base}" (${rowData.info_base.length} caracteres)`);
+  // Log detalhado para depuração do campo imagem
+  if (rowData.imagem) {
+    console.log(`[CSV Mapper] imagem original: "${rowData.imagem}" (${rowData.imagem.length} caracteres)`);
   }
   
-  // Verificamos se o info_base contém uma URL
+  // Verificamos se o campo imagem contém uma URL
   const urlRegex = /https?:\/\/[^\s]+/;
   let imageUrl = rowData.image_url || null;
-  let info_base = rowData.info_base || '';
+  let imagemContent = rowData.imagem || '';
   
-  // Se o info_base contém uma URL e não temos image_url, use-a como imageUrl
-  if (!imageUrl && info_base && urlRegex.test(info_base)) {
-    imageUrl = info_base;
-    console.log(`[CSV Mapper] URL detectada em info_base, usando como imageUrl: "${imageUrl}"`);
+  // Se o campo imagem contém uma URL e não temos image_url, use-a como imageUrl
+  if (!imageUrl && imagemContent && urlRegex.test(imagemContent)) {
+    imageUrl = imagemContent;
+    console.log(`[CSV Mapper] URL detectada em imagem, usando como imageUrl: "${imageUrl}"`);
   }
   
   return {
@@ -29,7 +29,7 @@ export const mapCsvRowToWineInfo = (rowData: CsvWineRow): WineInfo => {
     origin: rowData.origin || 'Outra',
     taste: rowData.taste || 'Seco',
     corkType: rowData.closure_type || 'Rolha',
-    info_base: info_base,
+    info_base: imagemContent,  // Mantemos o nome original no objeto WineInfo
     imageUrl: imageUrl
   };
 };

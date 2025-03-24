@@ -57,6 +57,14 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           // Ignora cabeçalhos vazios
           if (!header.trim()) return;
           
+          // Verificar especificamente para o cabeçalho "imagem" (antigo info_base)
+          if (header === 'imagem') {
+            columnMap[index] = 'imagem';
+            foundAtLeastOneRequiredHeader = true;
+            console.log(`[CSV Parser] Cabeçalho "imagem" encontrado na coluna ${index}`);
+            return;
+          }
+          
           // Verifica se é um cabeçalho que conhecemos
           const matchedHeader = Object.keys(REQUIRED_HEADERS).find(
             knownHeader => normalizeText(knownHeader) === header
@@ -108,13 +116,13 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
               const value = values[index];
               rowData[fieldName] = value;
               
-              // Log especial para URLs de imagem e info_base
+              // Log especial para URLs de imagem e campo imagem
               if (fieldName === 'image_url' && value) {
                 console.log(`[CSV Parser] Linha ${i}: encontrada coluna "image_url" com valor: "${value}"`);
               }
               
-              if (fieldName === 'info_base' && value) {
-                console.log(`[CSV Parser] Linha ${i}: encontrada coluna "info_base" com valor: "${value}"`);
+              if (fieldName === 'imagem' && value) {
+                console.log(`[CSV Parser] Linha ${i}: encontrada coluna "imagem" com valor: "${value}"`);
               }
             }
           });
@@ -132,11 +140,11 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         if (data.length > 0) {
           console.log('[CSV Parser] Exemplo da primeira linha processada:', data[0]);
           
-          // Verifique especificamente pelos campos de imagem e info_base
+          // Verifique especificamente pelos campos de imagem
           const withImageUrl = data.filter(row => row.image_url).length;
-          const withInfoBase = data.filter(row => row.info_base).length;
+          const withImagem = data.filter(row => row.imagem).length;
           console.log(`[CSV Parser] Linhas com URLs de imagem: ${withImageUrl} de ${data.length}`);
-          console.log(`[CSV Parser] Linhas com info_base: ${withInfoBase} de ${data.length}`);
+          console.log(`[CSV Parser] Linhas com campo imagem: ${withImagem} de ${data.length}`);
         }
         
         resolve(data);

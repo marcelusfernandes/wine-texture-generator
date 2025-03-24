@@ -7,7 +7,7 @@ export interface CsvWineRow {
   taste?: string;            // Sabor
   closure_type?: string;     // Tipo de tampa
   image_url?: string;        // URL da imagem
-  info_base?: string;        // Informação base
+  imagem?: string;           // Campo renomeado (antigo info_base)
   
   [key: string]: string | undefined; // Permitir outras colunas
 }
@@ -20,5 +20,5 @@ export const REQUIRED_HEADERS = {
   'taste': 'taste',
   'closure_type': 'closure_type',
   'image_url': 'image_url',
-  'info_base': 'info_base'
+  'imagem': 'imagem'   // Campo renomeado (antigo info_base)
 };
