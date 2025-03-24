@@ -15,28 +15,32 @@ export const normalizeText = (text: string): string => {
  * Validate and clean an image URL
  */
 export const validateImageUrl = (url: string | undefined): string | null => {
-  if (!url || url.trim() === '') return null;
+  console.log(`[URL Validation] Validando URL: ${url}`);
+  
+  if (!url || url.trim() === '') {
+    console.log(`[URL Validation] URL vazia ou indefinida`);
+    return null;
+  }
   
   // Remove quotes that might have been incorrectly parsed from CSV
   let cleanUrl = url.trim().replace(/^["']|["']$/g, '');
   
+  console.log(`[URL Validation] URL após remover aspas: "${cleanUrl}"`);
+  
   // Check if it's just a number (probably mistaken for a URL)
   if (/^\d+$/.test(cleanUrl)) {
-    console.log(`Invalid image URL detected (just numbers): ${cleanUrl}`);
+    console.log(`[URL Validation] URL inválida (apenas números): "${cleanUrl}"`);
     return null;
   }
-  
-  // Log para diagnóstico
-  console.log(`Processando URL da imagem: ${cleanUrl}`);
   
   // Try to ensure URL has protocol
   if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
     // If it looks like a domain (contains dots, no spaces), add https
     if (cleanUrl.includes('.') && !cleanUrl.includes(' ')) {
+      console.log(`[URL Validation] Adicionando protocolo https:// à URL: "${cleanUrl}"`);
       cleanUrl = `https://${cleanUrl}`;
-      console.log(`URL corrigida com protocolo: ${cleanUrl}`);
     } else {
-      console.log(`URL sem formato válido: ${cleanUrl}`);
+      console.log(`[URL Validation] URL sem formato válido e não parece ser um domínio: "${cleanUrl}"`);
       return null;
     }
   }
@@ -44,10 +48,10 @@ export const validateImageUrl = (url: string | undefined): string | null => {
   // Validate that it's a proper URL
   try {
     new URL(cleanUrl);
-    console.log(`URL válida encontrada: ${cleanUrl}`);
+    console.log(`[URL Validation] URL válida após processamento: "${cleanUrl}"`);
     return cleanUrl;
   } catch (error) {
-    console.log(`Erro de análise da URL: ${cleanUrl}`);
+    console.log(`[URL Validation] Erro ao analisar URL: "${cleanUrl}"`, error);
     return null;
   }
 };
@@ -59,8 +63,13 @@ export const validateImageUrl = (url: string | undefined): string | null => {
  */
 export const validateWineInfo = (wineInfo: WineInfo): boolean => {
   // Verifica se pelo menos type ou origin têm valores válidos (menos rigoroso agora)
-  return Boolean(
+  const isValid = Boolean(
     (wineInfo.type && wineInfo.type.length > 0) || 
     (wineInfo.origin && wineInfo.origin.length > 0)
   );
+  
+  console.log(`[Wine Validation] Validando dados de vinho: ${isValid ? 'VÁLIDO' : 'INVÁLIDO'}`, wineInfo);
+  
+  return isValid;
 };
+

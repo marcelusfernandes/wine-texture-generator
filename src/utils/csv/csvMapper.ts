@@ -27,30 +27,39 @@ export const mapCsvRowsToWineLabels = (rows: CsvWineRow[]): {
   wineInfo: WineInfo;
   isValid: boolean;
 }[] => {
-  return rows.map(row => {
+  console.log(`[CSV Mapper] Iniciando mapeamento de ${rows.length} linhas para rótulos de vinho`);
+  
+  return rows.map((row, index) => {
     const wineInfo = mapCsvRowToWineInfo(row);
     
     // Usa o nome do label se disponível, senão usa nome antigo, ou gera um nome padrão
     const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
     
+    console.log(`[CSV Mapper] Processando linha ${index + 1}: "${name}"`);
+    console.log(`[CSV Mapper] Dados da linha:`, row);
+    
     // Processa a URL da imagem
     let imageUrl = null;
     
+    // Verificação detalhada dos campos image_url e imagem
+    console.log(`[CSV Mapper] Verificando campo 'image_url': ${row.image_url !== undefined ? `"${row.image_url}"` : "undefined"}`);
+    console.log(`[CSV Mapper] Verificando campo 'imagem': ${row.imagem !== undefined ? `"${row.imagem}"` : "undefined"}`);
+    
     if (row.image_url) {
-      console.log(`Encontrada URL no CSV para ${name}: ${row.image_url}`);
+      console.log(`[CSV Mapper] Encontrada URL no CSV para "${name}": "${row.image_url}"`);
       imageUrl = validateImageUrl(row.image_url);
     } else if (row.imagem) {
-      console.log(`Encontrada URL alternativa no CSV para ${name}: ${row.imagem}`);
+      console.log(`[CSV Mapper] Encontrada URL alternativa no CSV para "${name}": "${row.imagem}"`);
       imageUrl = validateImageUrl(row.imagem);
     } else {
-      console.log(`Nenhuma URL encontrada para ${name} no CSV`);
+      console.log(`[CSV Mapper] Nenhuma URL encontrada para "${name}" no CSV`);
     }
     
     // Log para depuração
     if (imageUrl) {
-      console.log(`URL validada para ${name}: ${imageUrl}`);
+      console.log(`[CSV Mapper] URL validada para "${name}": ${imageUrl}`);
     } else {
-      console.log(`Sem URL válida para ${name}`);
+      console.log(`[CSV Mapper] Sem URL válida para "${name}"`);
     }
     
     return { 
@@ -61,3 +70,4 @@ export const mapCsvRowsToWineLabels = (rows: CsvWineRow[]): {
     };
   });
 };
+

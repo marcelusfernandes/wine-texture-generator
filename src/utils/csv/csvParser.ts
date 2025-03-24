@@ -34,6 +34,9 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           return;
         }
         
+        console.log(`[CSV Parser] Arquivo contém ${rows.length} linhas`);
+        console.log(`[CSV Parser] Primeira linha: ${rows[0]}`);
+        
         // Analisa cabeçalhos (primeira linha)
         const headerRow = rows[0];
         if (!headerRow || !headerRow.includes(',')) {
@@ -43,7 +46,7 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         
         const headers = headerRow.split(',').map(header => normalizeText(header));
         
-        console.log('Cabeçalhos CSV detectados:', headers);
+        console.log('[CSV Parser] Cabeçalhos CSV detectados:', headers);
         
         // Mapeia os cabeçalhos do CSV para os nomes de campo que usamos
         const columnMap: { [index: number]: string } = {};
@@ -61,16 +64,16 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
           if (matchedHeader) {
             columnMap[index] = REQUIRED_HEADERS[matchedHeader];
             foundAtLeastOneRequiredHeader = true;
-            console.log(`Cabeçalho encontrado: ${header} (${matchedHeader}) na coluna ${index} -> mapeia para ${REQUIRED_HEADERS[matchedHeader]}`);
+            console.log(`[CSV Parser] Cabeçalho encontrado: ${header} (${matchedHeader}) na coluna ${index} -> mapeia para ${REQUIRED_HEADERS[matchedHeader]}`);
           } else {
-            console.log(`Ignorando cabeçalho desconhecido: ${header} na coluna ${index}`);
+            console.log(`[CSV Parser] Ignorando cabeçalho desconhecido: ${header} na coluna ${index}`);
           }
         });
         
         if (!foundAtLeastOneRequiredHeader) {
-          console.error('Nenhum dos cabeçalhos necessários foi encontrado');
+          console.error('[CSV Parser] Nenhum dos cabeçalhos necessários foi encontrado');
           const headersList = Object.keys(REQUIRED_HEADERS)
-            .filter(h => ['label_name', 'nome', 'grape_variety', 'uva', 'origin', 'pais', 'taste', 'classificacao', 'closure_type', 'tampa', 'image_url'].includes(h))
+            .filter(h => ['label_name', 'nome', 'grape_variety', 'uva', 'origin', 'pais', 'taste', 'classificacao', 'closure_type', 'tampa', 'image_url', 'imagem'].includes(h))
             .join(', ');
             
           reject(new Error(`Nenhum cabeçalho reconhecido encontrado no CSV. O arquivo deve ter pelo menos um destes cabeçalhos: ${headersList}`));
@@ -80,12 +83,16 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
         // Mapeia linhas CSV para objetos, ignorando colunas que não nos interessam
         const data: CsvWineRow[] = [];
         
+        console.log('[CSV Parser] Mapeamento de colunas definido:', columnMap);
+        
         for (let i = 1; i < rows.length; i++) {
           const row = rows[i].trim();
           if (!row) continue; // Pula linhas vazias
           
           // Divide a linha em valores, respeitando aspas (implementação simplificada)
           const values = row.split(',').map(val => val.trim());
+          
+          console.log(`[CSV Parser] Linha ${i}: ${row}`);
           
           // Só processa a linha se tiver valores suficientes
           if (values.length < 1) {
@@ -102,22 +109,33 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
               rowData[fieldName] = value;
               
               // Log especial para URLs de imagem
-              if (fieldName === 'image_url' && value) {
-                console.log(`CSV linha ${i}: encontrada URL da imagem = "${value}"`);
+              if ((fieldName === 'image_url' || fieldName === 'imagem') && value) {
+                console.log(`[CSV Parser] Linha ${i}: encontrada coluna "${fieldName}" com valor: "${value}"`);
               }
             }
           });
           
           // Verifica se tem pelo menos um dado válido
           if (Object.keys(rowData).length > 0) {
+            console.log(`[CSV Parser] Dados extraídos da linha ${i}:`, rowData);
             data.push(rowData);
           }
         }
         
-        console.log(`Total de ${data.length} linhas válidas processadas`);
+        console.log(`[CSV Parser] Total de ${data.length} linhas válidas processadas`);
+        
+        // Log de uma amostra dos dados extraídos
+        if (data.length > 0) {
+          console.log('[CSV Parser] Exemplo da primeira linha processada:', data[0]);
+          
+          // Verifique especificamente pelos campos de imagem
+          const withImageUrl = data.filter(row => row.image_url || row.imagem).length;
+          console.log(`[CSV Parser] Linhas com URLs de imagem: ${withImageUrl} de ${data.length}`);
+        }
+        
         resolve(data);
       } catch (error) {
-        console.error('Erro ao processar CSV:', error);
+        console.error('[CSV Parser] Erro ao processar CSV:', error);
         reject(new Error(`Falha ao processar o arquivo CSV: ${error instanceof Error ? error.message : 'erro desconhecido'}`));
       }
     };
@@ -129,3 +147,4 @@ export const parseCsvFile = (file: File): Promise<CsvWineRow[]> => {
     reader.readAsText(file);
   });
 };
+

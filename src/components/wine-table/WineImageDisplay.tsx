@@ -19,9 +19,24 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   onViewImage 
 }) => {
   // Para diagnóstico - vamos logar a URL da imagem
-  console.log(`WineImageDisplay recebeu URL: ${imageUrl}`);
+  console.log(`[WineImageDisplay] Recebeu URL para "${alt}": ${imageUrl || 'null'}`);
+  
+  React.useEffect(() => {
+    if (imageUrl) {
+      // Verifica se a URL parece válida
+      console.log(`[WineImageDisplay] Analisando URL da imagem para "${alt}": ${imageUrl}`);
+      
+      try {
+        new URL(imageUrl);
+        console.log(`[WineImageDisplay] URL válida para "${alt}"`);
+      } catch (error) {
+        console.error(`[WineImageDisplay] URL inválida para "${alt}": ${imageUrl}`, error);
+      }
+    }
+  }, [imageUrl, alt]);
   
   if (!imageUrl) {
+    console.log(`[WineImageDisplay] Sem URL definida para "${alt}", mostrando fallback`);
     return (
       <Avatar className="h-10 w-10">
         <AvatarFallback>
@@ -31,6 +46,15 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
     );
   }
 
+  const handleImageLoadSuccess = () => {
+    console.log(`[WineImageDisplay] Imagem carregada com sucesso para "${alt}": ${imageUrl}`);
+  };
+
+  const handleImageLoadError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.error(`[WineImageDisplay] Erro ao carregar imagem para "${alt}": ${imageUrl}`, e);
+    onImageError();
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -38,7 +62,8 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           <AvatarImage 
             src={imageUrl} 
             alt={alt} 
-            onError={onImageError}
+            onError={handleImageLoadError}
+            onLoad={handleImageLoadSuccess}
           />
           <AvatarFallback>
             <Image className="h-4 w-4 text-muted-foreground" />
@@ -51,7 +76,8 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
             src={imageUrl} 
             alt={alt} 
             className="w-full h-auto max-h-64 object-contain"
-            onError={onImageError}
+            onError={handleImageLoadError}
+            onLoad={handleImageLoadSuccess}
           />
           <div className="absolute top-2 right-2">
             <Button
@@ -70,3 +96,4 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 };
 
 export default WineImageDisplay;
+
