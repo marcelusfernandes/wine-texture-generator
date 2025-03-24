@@ -15,32 +15,114 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
-  const handleImageClick = () => {
+  const fetchAndDownloadImage = async () => {
     if (!imageUrl || hasError) {
       toast.error("Não há imagem disponível para download");
       return;
     }
 
     try {
-      // Create a temporary link element
-      const link = document.createElement('a');
-      link.href = imageUrl;
+      setIsLoading(true);
       
-      // Extract filename from URL or use alt text
+      // Tentar fazer o fetch da imagem para contornar problemas de CORS
+      const response = await fetch(imageUrl, { mode: 'cors' })
+        .catch(() => {
+          // Se falhar com cors, tentar sem cors (para imagens locais)
+          return fetch(imageUrl);
+        });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status}`);
+      }
+      
+      // Converter a resposta em um blob
+      const blob = await response.blob();
+      
+      // Criar uma URL para o blob
+      const blobUrl = URL.createObjectURL(blob);
+      setDownloadUrl(blobUrl);
+      
+      // Criar um link temporário para download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      
+      // Extrair nome do arquivo da URL ou usar o texto alt
       const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
       link.download = filename;
       
-      // Append to body, click, and remove
+      // Acionar o download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
+      // Liberar a URL do objeto após um curto atraso
+      setTimeout(() => {
+        if (blobUrl) {
+          URL.revokeObjectURL(blobUrl);
+          setDownloadUrl(null);
+        }
+      }, 100);
+      
       toast.success(`Imagem "${alt}" baixada com sucesso`);
     } catch (error) {
       console.error("Error downloading image:", error);
-      toast.error("Erro ao baixar a imagem");
+      
+      // Alternativa: tentar renderizar em canvas se o fetch falhar
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          throw new Error("Não foi possível criar contexto de canvas");
+        }
+        
+        // Criar imagem temporária
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+          // Configurar tamanho do canvas
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          // Desenhar a imagem no canvas
+          ctx.drawImage(img, 0, 0);
+          
+          // Converter para data URL e iniciar download
+          try {
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            toast.success(`Imagem "${alt}" baixada com sucesso (via canvas)`);
+          } catch (canvasError) {
+            console.error("Canvas export error:", canvasError);
+            toast.error("Erro ao exportar imagem do canvas");
+          }
+        };
+        
+        img.onerror = () => {
+          toast.error("Não foi possível renderizar a imagem em canvas");
+        };
+        
+        img.src = imageUrl;
+      } catch (canvasError) {
+        console.error("Canvas fallback error:", canvasError);
+        toast.error("Erro ao baixar a imagem (CORS bloqueado)");
+      }
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleImageClick = () => {
+    fetchAndDownloadImage();
   };
 
   return (
