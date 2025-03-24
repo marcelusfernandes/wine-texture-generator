@@ -18,22 +18,8 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
   onImageError, 
   onViewImage 
 }) => {
-  // Para diagnóstico - vamos logar a URL da imagem
+  // Log da URL recebida
   console.log(`[WineImageDisplay] Recebeu URL para "${alt}": ${imageUrl || 'null'}`);
-  
-  React.useEffect(() => {
-    if (imageUrl) {
-      // Verifica se a URL parece válida
-      console.log(`[WineImageDisplay] Analisando URL da imagem para "${alt}": ${imageUrl}`);
-      
-      try {
-        new URL(imageUrl);
-        console.log(`[WineImageDisplay] URL válida para "${alt}"`);
-      } catch (error) {
-        console.error(`[WineImageDisplay] URL inválida para "${alt}": ${imageUrl}`, error);
-      }
-    }
-  }, [imageUrl, alt]);
   
   if (!imageUrl) {
     console.log(`[WineImageDisplay] Sem URL definida para "${alt}", mostrando fallback`);
@@ -96,4 +82,3 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 };
 
 export default WineImageDisplay;
-

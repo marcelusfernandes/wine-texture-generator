@@ -102,9 +102,7 @@ export const resizeImage = (
 };
 
 /**
- * Tests if a URL can be loaded
- * @param url URL to test
- * @returns Promise that resolves if URL is valid and loadable
+ * Tests if a URL can be loaded (simplificado)
  */
 export const testImageUrl = (url: string): Promise<boolean> => {
   return new Promise((resolve) => {
@@ -119,21 +117,9 @@ export const testImageUrl = (url: string): Promise<boolean> => {
 };
 
 /**
- * Decodes and cleans a URL with encoded parameters
- * @param url The encoded URL to clean
- * @returns Cleaned URL
+ * Retorna a URL sem processamento adicional
  */
 export const decodeComplexUrl = (url: string): string => {
-  try {
-    // For debugging
-    console.log("Original URL:", url);
-    
-    // Just return the URL as-is for now
-    // This will help us diagnose issues with complex URLs
-    return url;
-  } catch (error) {
-    console.error("Error decoding URL:", error);
-    return url;
-  }
+  console.log("URL original:", url);
+  return url;
 };
-

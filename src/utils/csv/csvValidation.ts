@@ -12,10 +12,10 @@ export const normalizeText = (text: string): string => {
 };
 
 /**
- * Validate and clean an image URL
+ * Simplificado: Retorna a URL como string, sem validações complexas
  */
 export const validateImageUrl = (url: string | undefined): string | null => {
-  console.log(`[URL Validation] Validando URL: ${url}`);
+  console.log(`[URL Validation] Recebido: ${url}`);
   
   if (!url || url.trim() === '') {
     console.log(`[URL Validation] URL vazia ou indefinida`);
@@ -27,33 +27,8 @@ export const validateImageUrl = (url: string | undefined): string | null => {
   
   console.log(`[URL Validation] URL após remover aspas: "${cleanUrl}"`);
   
-  // Check if it's just a number (probably mistaken for a URL)
-  if (/^\d+$/.test(cleanUrl)) {
-    console.log(`[URL Validation] URL inválida (apenas números): "${cleanUrl}"`);
-    return null;
-  }
-  
-  // Try to ensure URL has protocol
-  if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-    // If it looks like a domain (contains dots, no spaces), add https
-    if (cleanUrl.includes('.') && !cleanUrl.includes(' ')) {
-      console.log(`[URL Validation] Adicionando protocolo https:// à URL: "${cleanUrl}"`);
-      cleanUrl = `https://${cleanUrl}`;
-    } else {
-      console.log(`[URL Validation] URL sem formato válido e não parece ser um domínio: "${cleanUrl}"`);
-      return null;
-    }
-  }
-  
-  // Validate that it's a proper URL
-  try {
-    new URL(cleanUrl);
-    console.log(`[URL Validation] URL válida após processamento: "${cleanUrl}"`);
-    return cleanUrl;
-  } catch (error) {
-    console.log(`[URL Validation] Erro ao analisar URL: "${cleanUrl}"`, error);
-    return null;
-  }
+  // Retorna a URL sem validações complexas
+  return cleanUrl;
 };
 
 /**
@@ -72,4 +47,3 @@ export const validateWineInfo = (wineInfo: WineInfo): boolean => {
   
   return isValid;
 };
-

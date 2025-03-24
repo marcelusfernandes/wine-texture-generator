@@ -38,36 +38,30 @@ export const mapCsvRowsToWineLabels = (rows: CsvWineRow[]): {
     console.log(`[CSV Mapper] Processando linha ${index + 1}: "${name}"`);
     console.log(`[CSV Mapper] Dados da linha:`, row);
     
-    // Processa a URL da imagem
+    // Log dos valores de image_url e imagem para diagnóstico
+    console.log(`[CSV Mapper] Valor de image_url: ${String(row.image_url)}`);
+    console.log(`[CSV Mapper] Valor de imagem: ${String(row.imagem)}`);
+    
+    // Processa a URL da imagem sem validações complexas
     let imageUrl = null;
     
-    // Verificação detalhada dos campos image_url e imagem
-    console.log(`[CSV Mapper] Verificando campo 'image_url': ${row.image_url !== undefined ? `"${row.image_url}"` : "undefined"}`);
-    console.log(`[CSV Mapper] Verificando campo 'imagem': ${row.imagem !== undefined ? `"${row.imagem}"` : "undefined"}`);
-    
     if (row.image_url) {
-      console.log(`[CSV Mapper] Encontrada URL no CSV para "${name}": "${row.image_url}"`);
+      console.log(`[CSV Mapper] Encontrado valor em image_url para "${name}": "${row.image_url}"`);
       imageUrl = validateImageUrl(row.image_url);
     } else if (row.imagem) {
-      console.log(`[CSV Mapper] Encontrada URL alternativa no CSV para "${name}": "${row.imagem}"`);
+      console.log(`[CSV Mapper] Encontrado valor em imagem para "${name}": "${row.imagem}"`);
       imageUrl = validateImageUrl(row.imagem);
     } else {
-      console.log(`[CSV Mapper] Nenhuma URL encontrada para "${name}" no CSV`);
+      console.log(`[CSV Mapper] Nenhum valor de URL encontrado para "${name}"`);
     }
     
-    // Log para depuração
-    if (imageUrl) {
-      console.log(`[CSV Mapper] URL validada para "${name}": ${imageUrl}`);
-    } else {
-      console.log(`[CSV Mapper] Sem URL válida para "${name}"`);
-    }
+    console.log(`[CSV Mapper] URL final para "${name}": ${imageUrl}`);
     
     return { 
       name, 
       wineInfo, 
       imageUrl, 
-      isValid: true  // Será filtrado depois
+      isValid: true
     };
   });
 };
-
