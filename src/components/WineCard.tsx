@@ -74,17 +74,62 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       ctx.fillText(sweetText, 0, 0); // Center the text at the rotation point
       ctx.restore();
       
-      // Draw the grape variety text (vertically)
+      // Draw the grape variety text (vertically) with word wrapping
       ctx.save();
-      ctx.translate(109 + 95, 587 + 492/2); // Center horizontally in the gray box and vertically
-      ctx.rotate(-Math.PI / 2);
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle'; // Center text vertically relative to the rotation point
+      
+      // Set up the font for grape variety text
       ctx.font = 'bold 62px "Arial Rounded MT Bold", Arial, sans-serif';
       ctx.fillStyle = 'white';
-      // Use the grape variety text from wineInfo, uppercase and use a placeholder if empty
-      const grapeText = wineInfo.type.toUpperCase() || 'GRAPE VARIETY';
-      ctx.fillText(grapeText, 0, 0); // Center the text at the rotation point
+      
+      // Get grape text with placeholder if needed
+      const originalGrapeText = wineInfo.type.toUpperCase() || 'GRAPE VARIETY';
+      
+      // Calculate available height for text (with padding)
+      const grapeBoxHeight = 492;
+      const paddingTopBottom = 16; // Minimum padding of 16px at top and bottom
+      const availableHeight = grapeBoxHeight - (paddingTopBottom * 2);
+      
+      // Split text into words to enable word wrapping
+      const words = originalGrapeText.split(' ');
+      const lines = [];
+      let currentLine = words[0];
+      
+      // Simple word-wrapping algorithm
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const testLine = currentLine + ' ' + word;
+        const testWidth = ctx.measureText(testLine).width;
+        
+        // If adding this word would make the line too long, start a new line
+        // We use 460 as a limit (492 - padding) for the available height 
+        // when rotated it becomes the width for the text
+        if (testWidth > availableHeight) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      lines.push(currentLine); // Add the last line
+      
+      // Position and draw the wrapped text
+      // Center in the gray box
+      ctx.translate(109 + 95, 587 + 492/2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Draw multi-line text centered vertically
+      const lineHeight = 64; // Line height for 62px font
+      const totalTextHeight = lines.length * lineHeight;
+      const startY = -totalTextHeight / 2 + lineHeight / 2;
+      
+      // Draw each line of text
+      lines.forEach((line, index) => {
+        const yPos = startY + index * lineHeight;
+        ctx.fillText(line, 0, yPos);
+      });
+      
       ctx.restore();
       
       // Draw the closure type icon (top right)
