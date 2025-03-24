@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Upload, X, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getProxiedImageUrl } from '@/utils/imageUtils';
 
 interface ImageUploaderProps {
   onImageUpload: (file: File, preview: string) => void;

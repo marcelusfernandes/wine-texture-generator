@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for image manipulation
  */
@@ -102,24 +101,79 @@ export const resizeImage = (
 };
 
 /**
- * Tests if a URL can be loaded (simplificado)
+ * Tests if a URL can be loaded
  */
 export const testImageUrl = (url: string): Promise<boolean> => {
   return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = url;
+    // If the URL is a data URL, resolve immediately
+    if (url.startsWith('data:')) {
+      resolve(true);
+      return;
+    }
     
-    // Set a timeout to prevent hanging on slow resources
-    setTimeout(() => resolve(false), 5000);
+    // For regular URLs, try to load through the proxy first
+    getProxiedImageUrl(url)
+      .then(() => resolve(true))
+      .catch(() => {
+        // If proxy fails, try direct loading as fallback
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+        
+        // Set a timeout to prevent hanging on slow resources
+        setTimeout(() => resolve(false), 5000);
+      });
   });
 };
 
 /**
- * Retorna a URL sem processamento adicional
+ * Proxy an image URL to bypass CORS restrictions
+ * @param url The original image URL
+ * @returns Promise with the proxied image URL (as data URL)
+ */
+export const getProxiedImageUrl = async (url: string): Promise<string> => {
+  // If already a data URL, return it unchanged
+  if (url.startsWith('data:')) {
+    return url;
+  }
+  
+  try {
+    // Use a CORS proxy service
+    const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
+    
+    const response = await fetch(proxyUrl, {
+      headers: {
+        'Origin': window.location.origin
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+    }
+    
+    // Convert to blob and then to data URL
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error proxying image:', error);
+    // Return the original URL as fallback
+    return url;
+  }
+};
+
+/**
+ * Returns a processed URL for displaying images
+ * Uses proxy service to bypass CORS if needed
  */
 export const decodeComplexUrl = (url: string): string => {
+  // Return the URL unchanged for now
+  // The actual proxying happens when the image is loaded
   console.log("URL original:", url);
   return url;
 };
