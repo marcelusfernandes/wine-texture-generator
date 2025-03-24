@@ -1,9 +1,8 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Image as ImageIcon, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
 
 interface WineImageDisplayProps {
   imageUrl: string | null;
@@ -16,88 +15,32 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const imageRef = useRef<HTMLImageElement>(null);
 
-  const captureAndDownloadImage = async () => {
-    if (!imageUrl || hasError || !imageRef.current) {
+  const handleImageClick = () => {
+    if (!imageUrl || hasError) {
       toast.error("Não há imagem disponível para download");
       return;
     }
 
     try {
-      // Indicar que o processo começou
-      setIsLoading(true);
-      toast.info("Preparando a imagem para download...");
-      
-      // Usar html2canvas para capturar a imagem
-      const canvas = await html2canvas(imageRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: 2, // Melhor qualidade
-        logging: false
-      });
-      
-      // Converter para PNG
-      const imageData = canvas.toDataURL('image/png');
-      
-      // Criar um link para download
+      // Create a temporary link element
       const link = document.createElement('a');
-      link.href = imageData;
-      link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+      link.href = imageUrl;
       
-      // Iniciar o download
+      // Extract filename from URL or use alt text
+      const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+      link.download = filename;
+      
+      // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      toast.success(`Imagem "${alt}" capturada e baixada com sucesso`);
+      toast.success(`Imagem "${alt}" baixada com sucesso`);
     } catch (error) {
-      console.error("Erro ao capturar imagem:", error);
-      toast.error("Erro ao capturar e baixar a imagem");
-      
-      // Tentativa de fallback com método anterior
-      try {
-        // Criar um canvas manualmente
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        if (!ctx || !imageRef.current) {
-          throw new Error("Contexto de canvas indisponível");
-        }
-        
-        // Configurar tamanho do canvas baseado na imagem
-        canvas.width = imageRef.current.naturalWidth || imageRef.current.width;
-        canvas.height = imageRef.current.naturalHeight || imageRef.current.height;
-        
-        // Desenhar a imagem no canvas
-        ctx.drawImage(imageRef.current, 0, 0);
-        
-        try {
-          // Exportar como PNG
-          const dataUrl = canvas.toDataURL('image/png');
-          const link = document.createElement('a');
-          link.href = dataUrl;
-          link.download = `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          toast.success(`Imagem "${alt}" baixada com sucesso (fallback)`);
-        } catch (err) {
-          console.error("Erro no fallback:", err);
-          toast.error("Erro ao exportar imagem");
-        }
-      } catch (fallbackError) {
-        console.error("Erro no método fallback:", fallbackError);
-      }
-    } finally {
-      setIsLoading(false);
+      console.error("Error downloading image:", error);
+      toast.error("Erro ao baixar a imagem");
     }
-  };
-
-  const handleImageClick = () => {
-    captureAndDownloadImage();
   };
 
   return (
@@ -109,7 +52,6 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
           title="Clique para baixar a imagem"
         >
           <img 
-            ref={imageRef}
             src={imageUrl} 
             alt={alt}
             className={cn(
