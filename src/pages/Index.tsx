@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Sparkles, List } from 'lucide-react';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import ImageUploader from '@/components/ImageUploader';
 import TextInputs, { WineInfo } from '@/components/TextInputs';
 import ImagePreview from '@/components/ImagePreview';
-import { isImageFile } from '@/utils/imageUtils';
+import { isImageFile, testImageUrl } from '@/utils/imageUtils';
 
 const Index = () => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -15,17 +15,39 @@ const Index = () => {
     type: '',
     origin: '',
     taste: '',
-    corkType: ''
+    corkType: '',
+    imageUrl: ''
   });
+
+  // Effect to handle URL changes from the form
+  useEffect(() => {
+    if (wineInfo.imageUrl && wineInfo.imageUrl !== imageUrl) {
+      // Only update if the URLs are different
+      testImageUrl(wineInfo.imageUrl)
+        .then(isValid => {
+          if (isValid) {
+            setImageUrl(wineInfo.imageUrl);
+          } else {
+            toast.error('A URL da imagem não é válida ou está inacessível');
+          }
+        });
+    }
+  }, [wineInfo.imageUrl, imageUrl]);
 
   const handleImageUpload = (file: File, preview: string) => {
     if (!isImageFile(file)) {
-      toast.error('Please upload a valid image file');
+      toast.error('Por favor, faça upload de um arquivo de imagem válido');
       return;
     }
     
+    // Clear the URL field when uploading a file
+    setWineInfo(prev => ({
+      ...prev,
+      imageUrl: null
+    }));
+    
     setImageUrl(preview);
-    toast.success('Image uploaded successfully');
+    toast.success('Imagem carregada com sucesso');
   };
 
   const handleInfoChange = (newInfo: WineInfo) => {

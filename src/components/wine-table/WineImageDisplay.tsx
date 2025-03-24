@@ -23,20 +23,64 @@ const WineImageDisplay: React.FC<WineImageDisplayProps> = ({
     }
 
     try {
-      // Create a temporary link element
-      const link = document.createElement('a');
-      link.href = imageUrl;
+      // Create a canvas element to draw the image (can bypass CORS issues)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
       
-      // Extract filename from URL or use alt text
-      const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
-      link.download = filename;
+      img.crossOrigin = "anonymous";
       
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      img.onload = () => {
+        // Set canvas size to match image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw image on canvas
+        ctx?.drawImage(img, 0, 0);
+        
+        try {
+          // Convert canvas to data URL
+          const dataUrl = canvas.toDataURL('image/png');
+          
+          // Create download link
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          
+          // Extract filename from URL or use alt text
+          const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+          link.download = filename;
+          
+          // Trigger download
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          toast.success(`Imagem "${alt}" baixada com sucesso`);
+        } catch (e) {
+          console.error("Error creating download from canvas:", e);
+          fallbackDownload();
+        }
+      };
       
-      toast.success(`Imagem "${alt}" baixada com sucesso`);
+      img.onerror = fallbackDownload;
+      
+      // Set image source to trigger loading
+      img.src = imageUrl;
+      
+      // Fallback method using direct link
+      function fallbackDownload() {
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        
+        const filename = imageUrl.split('/').pop() || `${alt.toLowerCase().replace(/\s+/g, '-')}.png`;
+        link.download = filename;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success(`Imagem "${alt}" baixada com sucesso`);
+      }
     } catch (error) {
       console.error("Error downloading image:", error);
       toast.error("Erro ao baixar a imagem");

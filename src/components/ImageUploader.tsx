@@ -1,7 +1,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -79,6 +79,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, className 
         <Button variant="secondary" className="mt-2">
           Select Image
         </Button>
+        
+        <div className="flex items-center gap-2 mt-2">
+          <LinkIcon className="h-4 w-4 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">
+            Or add a URL in the Wine Information section below
+          </p>
+        </div>
       </div>
       <input
         type="file"

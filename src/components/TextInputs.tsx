@@ -32,6 +32,22 @@ const TextInputs: React.FC<TextInputsProps> = ({ wineInfo, onChange, className, 
   return (
     <div className={cn("space-y-6 animate-fade-up", className)}>
       <div className="space-y-2">
+        <Label htmlFor="imageUrl">URL da Imagem (opcional)</Label>
+        <Input
+          id="imageUrl"
+          name="imageUrl"
+          value={wineInfo.imageUrl || ''}
+          onChange={handleChange}
+          placeholder="ex., https://example.com/wine-image.jpg"
+          className="transition-all focus:ring-2 focus:ring-primary/20"
+          disabled={disabled}
+        />
+        <p className="text-xs text-muted-foreground">
+          Insira uma URL de imagem para exibir no preview
+        </p>
+      </div>
+      
+      <div className="space-y-2">
         <Label htmlFor="type">Tipo de Uva</Label>
         <Input
           id="type"
