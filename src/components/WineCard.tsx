@@ -32,75 +32,78 @@ const WineCard: React.FC<WineCardProps> = ({ imageUrl, wineInfo, className }) =>
       const width = img.width;
       const height = img.height;
       
-      // Left side bar for grape variety
+      // Left side bar width
       const leftBarWidth = width * 0.25;
       
-      // Draw burgundy background for grape variety
+      // Draw burgundy background for sweetness level (top left)
       ctx.fillStyle = '#8C1C3C';
       ctx.fillRect(0, 0, leftBarWidth, height * 0.5);
       
-      // Draw gray background for country of origin
-      ctx.fillStyle = '#555555';
+      // Draw gray background for grape variety (bottom left)
+      ctx.fillStyle = '#666666';
       ctx.fillRect(0, height * 0.5, leftBarWidth, height * 0.5);
       
-      // Draw grape variety text vertically
+      // Draw sweetness level text vertically (top left)
       ctx.save();
       ctx.translate(leftBarWidth / 2, height * 0.25);
       ctx.rotate(-Math.PI / 2);
       ctx.textAlign = 'center';
       ctx.font = `bold ${Math.max(width * 0.06, 24)}px Inter`;
       ctx.fillStyle = 'white';
-      ctx.fillText(wineInfo.type.toUpperCase(), 0, 0);
+      ctx.fillText('SWEET', 0, 0);
       ctx.restore();
       
-      // Draw country of origin text vertically
+      // Draw grape variety text vertically (bottom left)
       ctx.save();
       ctx.translate(leftBarWidth / 2, height * 0.75);
       ctx.rotate(-Math.PI / 2);
       ctx.textAlign = 'center';
       ctx.font = `bold ${Math.max(width * 0.05, 20)}px Inter`;
       ctx.fillStyle = 'white';
-      ctx.fillText(wineInfo.origin.toUpperCase(), 0, 0);
+      ctx.fillText(`${wineInfo.type.toUpperCase()}`, 0, 0);
       ctx.restore();
       
-      // Right side for closure type with icon
+      // Right side for closure type with icon (top right)
       const rightSide = width * 0.75;
       const iconSize = width * 0.15;
       const iconX = rightSide + (width - rightSide) / 2 - iconSize / 2;
       
-      // Draw closure type icon (simplified circle)
+      // Draw closure type icon (top right)
       ctx.beginPath();
       ctx.arc(iconX + iconSize / 2, height * 0.25, iconSize / 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#4A1616';
       ctx.lineWidth = width * 0.005;
       ctx.stroke();
       
-      // Draw closure type text
-      ctx.font = `bold ${Math.max(width * 0.05, 20)}px Inter`;
+      // Draw closure type text (top right)
+      ctx.font = `bold ${Math.max(width * 0.04, 18)}px Inter`;
       ctx.fillStyle = '#4A1616';
       ctx.textAlign = 'center';
-      ctx.fillText(wineInfo.corkType.toUpperCase() || 'ROLHA', iconX + iconSize / 2, height * 0.4);
+      ctx.fillText('CLOSURE', iconX + iconSize / 2, height * 0.45 - 12);
+      ctx.fillText('TYPE', iconX + iconSize / 2, height * 0.45 + 12);
       
-      // Draw country flag icon (simplified circle)
+      // Show the actual closure type value below the label
+      ctx.font = `${Math.max(width * 0.03, 14)}px Inter`;
+      ctx.fillStyle = '#4A1616';
+      ctx.fillText(`(${wineInfo.corkType})`, iconX + iconSize / 2, height * 0.45 + 36);
+      
+      // Draw country flag icon (bottom right)
       ctx.beginPath();
-      ctx.arc(iconX + iconSize / 2, height * 0.65, iconSize / 2, 0, Math.PI * 2);
+      ctx.arc(iconX + iconSize / 2, height * 0.75, iconSize / 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#4A1616';
       ctx.lineWidth = width * 0.005;
       ctx.stroke();
       
-      // Draw origin name below flag (repeated for visibility)
-      ctx.font = `bold ${Math.max(width * 0.05, 20)}px Inter`;
+      // Draw country text (bottom right)
+      ctx.font = `bold ${Math.max(width * 0.04, 18)}px Inter`;
       ctx.fillStyle = '#4A1616';
       ctx.textAlign = 'center';
-      ctx.fillText(wineInfo.origin.toUpperCase(), iconX + iconSize / 2, height * 0.8);
+      ctx.fillText('COUNTRY', iconX + iconSize / 2, height * 0.95 - 12);
       
-      // Draw sweetness level at bottom if provided
-      if (wineInfo.taste) {
-        ctx.font = `italic ${Math.max(width * 0.03, 14)}px Inter`;
-        ctx.fillStyle = '#333';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Sweetness: ${wineInfo.taste}`, width / 2, height * 0.95);
-      }
+      // Show the actual country value below the label
+      ctx.font = `${Math.max(width * 0.03, 14)}px Inter`;
+      ctx.fillStyle = '#4A1616';
+      ctx.fillText(`(${wineInfo.origin})`, iconX + iconSize / 2, height * 0.95 + 12);
     };
     
     img.src = imageUrl;
