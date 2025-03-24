@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Copy, Edit, Trash2, ExternalLink } from "lucide-react";
+import { Copy, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +15,6 @@ interface WineTableActionsProps {
   id: string;
   showDeleteConfirm: boolean;
   imageUrl: string | null;
-  onViewImage: () => void;
   onDuplicate: () => void;
   onDeleteRequest: () => void;
   onDeleteConfirm: () => void;
@@ -25,8 +24,6 @@ interface WineTableActionsProps {
 const WineTableActions: React.FC<WineTableActionsProps> = ({
   id,
   showDeleteConfirm,
-  imageUrl,
-  onViewImage,
   onDuplicate,
   onDeleteRequest,
   onDeleteConfirm,
@@ -55,13 +52,6 @@ const WineTableActions: React.FC<WineTableActionsProps> = ({
           <DropdownMenuItem onClick={onDuplicate}>
             <Copy className="h-4 w-4 mr-2" />
             Duplicar
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={onViewImage}
-            disabled={!imageUrl}
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Ver imagem
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onDeleteRequest}>
             <Trash2 className="h-4 w-4 mr-2 text-destructive" />

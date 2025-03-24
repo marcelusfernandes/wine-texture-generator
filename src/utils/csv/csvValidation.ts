@@ -12,7 +12,7 @@ export const normalizeText = (text: string): string => {
 };
 
 /**
- * Simplificado: Retorna a URL como string, sem validações complexas
+ * Simplificado: Retorna a URL como string, sem validações
  */
 export const validateImageUrl = (url: string | undefined): string | null => {
   console.log(`[URL Validation] Recebido: ${url}`);
@@ -25,9 +25,9 @@ export const validateImageUrl = (url: string | undefined): string | null => {
   // Remove quotes that might have been incorrectly parsed from CSV
   let cleanUrl = url.trim().replace(/^["']|["']$/g, '');
   
-  console.log(`[URL Validation] URL após remover aspas: "${cleanUrl}"`);
+  console.log(`[URL Validation] URL após limpeza: "${cleanUrl}"`);
   
-  // Retorna a URL sem validações complexas
+  // Retorna a URL sem validações
   return cleanUrl;
 };
 

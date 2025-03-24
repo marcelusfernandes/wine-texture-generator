@@ -79,13 +79,12 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px]">Imagem</TableHead>
+            <TableHead className="w-[200px]">URL da Imagem</TableHead>
             <TableHead className="w-[200px]">Nome do Rótulo</TableHead>
             <TableHead>Tipo de Uva</TableHead>
             <TableHead>Origem</TableHead>
             <TableHead>Sabor</TableHead>
             <TableHead>Tipo de Tampa</TableHead>
-            <TableHead>URL da Imagem</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>

@@ -40,21 +40,6 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
     toast.success('Nome do rótulo atualizado');
   };
 
-  const handleImageError = () => {
-    setImageErrors(prev => ({ ...prev, [label.id]: true }));
-    console.error(`❌ Falha ao carregar imagem para o rótulo ID: ${label.id}, URL: ${label.imageUrl}`);
-  };
-
-  const handleViewImage = () => {
-    if (!label.imageUrl) {
-      toast.error('Nenhuma imagem disponível para este rótulo');
-      return;
-    }
-    
-    console.log("Abrindo URL em nova aba:", label.imageUrl);
-    window.open(label.imageUrl, '_blank', 'noopener,noreferrer');
-  };
-
   // Para diagnóstico - vamos logar os dados do rótulo
   console.log(`[WineTableRow] Renderizando rótulo ${label.id}: "${label.name}" - URL imagem: ${label.imageUrl || 'SEM URL'}`);
 
@@ -64,8 +49,6 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
         <WineImageDisplay 
           imageUrl={label.imageUrl} 
           alt={label.name}
-          onImageError={handleImageError}
-          onViewImage={handleViewImage}
         />
       </TableCell>
       <TableCell>
@@ -78,17 +61,11 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
       <TableCell>{label.wineInfo.origin}</TableCell>
       <TableCell>{label.wineInfo.taste}</TableCell>
       <TableCell>{label.wineInfo.corkType}</TableCell>
-      <TableCell className="max-w-[200px] truncate">
-        <span className="text-xs text-muted-foreground" title={label.imageUrl || 'Sem URL'}>
-          {label.imageUrl || 'Sem URL'}
-        </span>
-      </TableCell>
       <TableCell className="text-right">
         <WineTableActions 
           id={label.id}
           showDeleteConfirm={deleteConfirmId === label.id}
           imageUrl={label.imageUrl}
-          onViewImage={handleViewImage}
           onDuplicate={() => onDuplicate(label.id)}
           onDeleteRequest={() => onDeleteRequest(label.id)}
           onDeleteConfirm={() => onDeleteConfirm(label.id)}

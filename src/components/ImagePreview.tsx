@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 interface ImagePreviewProps {
   imageUrl: string | null;
   wineInfo: WineInfo;
-  canvasRef?: React.RefObject<HTMLCanvasElement>;
   className?: string;
 }
 
@@ -18,8 +17,11 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
   wineInfo, 
   className 
 }) => {
+  // Utiliza a imageUrl passada como prop ou a do wineInfo como fallback
+  const effectiveImageUrl = imageUrl || wineInfo.imageUrl || null;
+
   const handleDownload = () => {
-    if (!imageUrl) return;
+    if (!effectiveImageUrl) return;
     
     // Find the canvas element rendered by WineCard
     const canvas = document.querySelector('canvas');
@@ -42,7 +44,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
         <h3 className="text-xl font-medium">Preview</h3>
         <Button 
           onClick={handleDownload} 
-          disabled={!imageUrl}
+          disabled={!effectiveImageUrl}
           size="sm"
           className="gap-2"
         >
@@ -53,7 +55,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
       
       <WineCard imageUrl={imageUrl} wineInfo={wineInfo} />
       
-      {imageUrl && (
+      {effectiveImageUrl && (
         <div className="text-sm text-muted-foreground mt-2 animate-fade-up">
           <p>The image will be downloaded with the text overlay as shown in the preview.</p>
         </div>
