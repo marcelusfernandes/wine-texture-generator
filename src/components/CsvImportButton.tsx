@@ -7,7 +7,7 @@ import { processCsvFile } from '@/utils/csvUtils';
 import { WineInfo } from './TextInputs';
 
 interface CsvImportButtonProps {
-  onImport: (labels: { name: string; wineInfo: WineInfo }[]) => void;
+  onImport: (labels: { name: string; imageUrl: string | null; wineInfo: WineInfo }[]) => void;
   className?: string;
 }
 

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Copy, Edit, Trash2, Check, X, Image, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -45,14 +44,8 @@ interface WineLabelsTableProps {
 const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) => {
   const [editingName, setEditingName] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
-
-  // Estado para rastrear a operação de confirmação de exclusão
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  
-  // Track image loading errors
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  
-  // Estado para visualização de imagem com preview
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const startEditingName = (id: string, currentName: string) => {
@@ -60,13 +53,10 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
     setNewName(currentName);
   };
 
-  // Debug: Log image URLs for inspection on component mount
-  useEffect(() => {
+  React.useEffect(() => {
     labels.forEach(label => {
       if (label.imageUrl) {
-        console.log(`Original URL for label ${label.id}: ${label.imageUrl}`);
-        const processed = getCleanImageUrl(label.imageUrl);
-        console.log(`Processed URL: ${processed}`);
+        console.log(`Label ID ${label.id} - Image URL: ${label.imageUrl}`);
       }
     });
   }, [labels]);
@@ -116,44 +106,27 @@ const WineLabelsTable: React.FC<WineLabelsTableProps> = ({ labels, onUpdate }) =
     setDeleteConfirmId(null);
     toast.success('Rótulo excluído');
   };
-  
+
   const handleImageError = (id: string) => {
     setImageErrors(prev => ({ ...prev, [id]: true }));
-    console.log(`Image failed to load for label ID: ${id}`);
+    console.error(`❌ Falha ao carregar imagem para o rótulo ID: ${id}`);
   };
-  
-  // Function to view image in preview popover
+
   const previewImage = (url: string | null) => {
     setPreviewImageUrl(url);
   };
-  
-  // Function to view image in new tab
+
   const viewImage = (url: string | null) => {
     if (!url) {
       toast.error('Nenhuma imagem disponível para este rótulo');
       return;
     }
     
-    // Log the URL for debugging
-    console.log("Opening URL:", url);
+    console.log("Abrindo URL em nova aba:", url);
     
-    // Open in a new tab without processing
     window.open(url, '_blank');
   };
-  
-  // Helper to clean image URL for display in Avatar component
-  const getCleanImageUrl = (url: string | null): string | null => {
-    if (!url) return null;
-    
-    // For debugging purposes
-    console.log(`Processing URL: ${url}`);
-    
-    // Return the URL as is - don't process it for now
-    // This will let us see what the actual URL data looks like
-    return url;
-  };
 
-  // Se não houver rótulos, mostra uma mensagem
   if (labels.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">

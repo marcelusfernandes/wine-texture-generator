@@ -1,3 +1,4 @@
+
 /**
  * Utilidades para manipulação de arquivos CSV
  */
@@ -276,21 +277,33 @@ export const processCsvFile = async (file: File): Promise<{
     const validLabels = rows
       .map(row => {
         const wineInfo = mapCsvRowToWineInfo(row);
+        
         // Usa o nome do label se disponível, senão usa nome antigo, ou gera um nome padrão
         const name = row.label_name || row.nome || `Vinho ${Math.floor(Math.random() * 1000)}`;
         
-        // Validate and clean image URL
-        const imageUrl = validateImageUrl(row.image_url || null);
+        // Processa a URL da imagem - Aqui está a correção principal
+        const imageUrl = row.image_url ? validateImageUrl(row.image_url) : null;
         
         // Log para depuração
         if (imageUrl) {
           console.log(`Processando imageUrl para ${name}: ${imageUrl}`);
+        } else if (row.image_url) {
+          console.log(`URL inválida para ${name}: ${row.image_url}`);
         }
         
-        return { name, wineInfo, imageUrl, isValid: validateWineInfo(wineInfo) };
+        return { 
+          name, 
+          wineInfo, 
+          imageUrl, 
+          isValid: validateWineInfo(wineInfo) 
+        };
       })
       .filter(item => item.isValid)
-      .map(({name, wineInfo, imageUrl}) => ({name, wineInfo, imageUrl}));
+      .map(({name, wineInfo, imageUrl}) => ({
+        name,
+        wineInfo,
+        imageUrl
+      }));
     
     console.log(`${validLabels.length} de ${rows.length} rótulos são válidos`);
     

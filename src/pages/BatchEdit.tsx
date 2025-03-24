@@ -53,15 +53,28 @@ const BatchEdit = () => {
     let nextId = Math.max(0, ...labels.map(label => parseInt(label.id))) + 1;
     
     // Cria novos rótulos de vinho a partir dos dados importados
-    const newLabels = importedLabels.map(imported => ({
-      id: (nextId++).toString(),
-      name: imported.name,
-      imageUrl: imported.imageUrl,
-      wineInfo: imported.wineInfo
-    }));
+    const newLabels = importedLabels.map(imported => {
+      // Logs para depuração
+      console.log(`Processando rótulo importado: ${imported.name}`);
+      if (imported.imageUrl) {
+        console.log(`Imagem URL para ${imported.name}: ${imported.imageUrl}`);
+      }
+      
+      return {
+        id: (nextId++).toString(),
+        name: imported.name,
+        imageUrl: imported.imageUrl,
+        wineInfo: imported.wineInfo
+      };
+    });
     
     // Adiciona os novos rótulos aos existentes
     setLabels(prevLabels => [...prevLabels, ...newLabels]);
+    
+    // Informa ao usuário sobre a importação
+    toast.success(`${newLabels.length} rótulos importados com sucesso`, {
+      description: 'Você pode editar os detalhes de cada rótulo individualmente.'
+    });
   };
 
   return (
