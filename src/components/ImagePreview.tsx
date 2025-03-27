@@ -347,22 +347,15 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, wineInfo }) => {
 
   useEffect(() => {
     const loadFonts = async () => {
-      // Carregar fonte Nunito Bold (700)
-      const fontBold = new FontFace('Nunito', 'url(https://fonts.gstatic.com/s/nunitosans/v12/pe03MImSLYBIv1o4X1M8cc8GBs5tU1E.woff2)', {
-        weight: '700',
-        style: 'normal'
-      });
-
       // Carregar fonte Nunito Black (900)
-      const fontBlack = new FontFace('Nunito', 'url(https://fonts.gstatic.com/s/nunitosans/v12/pe03MImSLYBIv1o4X1M8cc8-BM5tU1E.woff2)', {
+      const fontBlack = new FontFace('Nunito', 'url(/attached_assets/Nunito-Black.woff)', {
         weight: '900',
         style: 'normal'
       });
 
       try {
-        // Carregar ambas as fontes
-        const [loadedBold, loadedBlack] = await Promise.all([fontBold.load(), fontBlack.load()]);
-        document.fonts.add(loadedBold);
+        // Carregar fonte
+        const loadedBlack = await fontBlack.load();
         document.fonts.add(loadedBlack);
         
         // Renderizar preview
