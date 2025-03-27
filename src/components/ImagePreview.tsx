@@ -71,7 +71,9 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, wineInfo }) => {
     ctx.save();
     ctx.translate(tasteContainerX + tasteContainerWidth/2, tasteContainerY + tasteContainerHeight/2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText(taste, 0, 0);
+    const tasteLineHeight = tasteFontSize / 5;
+    const tasteStartY = -(tasteLineHeight / 2);
+    ctx.fillText(taste, 0, tasteStartY + tasteLineHeight);
     ctx.restore();
 
     // Desenhar container da uva
@@ -118,12 +120,13 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, wineInfo }) => {
       ctx.font = `900 ${smallerFontSize}px "Nunito"`;
     }
     
-    const lineHeight = lines.length > 1 ? smallerFontSize * 1.2 : 0;
+    const lineHeight = lines.length > 1 ? smallerFontSize * 1.2 : fontSize * 1.2;
     const totalHeight = (lines.length - 1) * lineHeight;
-    const startY = -totalHeight / 2;
+    const startY = -(totalHeight / 2) - (lineHeight / 2);
     
     lines.forEach((line, index) => {
-      ctx.fillText(line, 0, startY + (index * lineHeight));
+      const y = startY + (index * lineHeight) + lineHeight;
+      ctx.fillText(line, 0, y);
     });
     ctx.restore();
 

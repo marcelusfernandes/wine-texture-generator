@@ -156,9 +156,11 @@ const Winemass = () => {
 
           // Desenhar texto do sabor
           tempCtx.save();
-          tempCtx.translate(tasteContainerX + tasteContainerWidth/2 + 20, tasteContainerY + tasteContainerHeight/2);
+          tempCtx.translate(tasteContainerX + tasteContainerWidth/2, tasteContainerY + tasteContainerHeight/2);
           tempCtx.rotate(-Math.PI / 2);
-          tempCtx.fillText(taste, 0, 0);
+          const tasteLineHeight = tasteFontSize * 1.2;
+          const tasteStartY = -(tasteLineHeight / 2);
+          tempCtx.fillText(taste, 0, tasteStartY + tasteLineHeight);
           tempCtx.restore();
 
           // Desenhar container da uva
@@ -186,7 +188,7 @@ const Winemass = () => {
           for (let i = 1; i < words.length; i++) {
             const word = words[i];
             const width = tempCtx.measureText(currentLine + ' ' + word).width;
-            if (width < grapeContainerHeight * 0.8) { // 80% da altura do container para margem
+            if (width < grapeContainerHeight * 0.6) { // Reduzido para 60% para melhor ajuste
               currentLine += ' ' + word;
             } else {
               lines.push(currentLine);
@@ -197,7 +199,7 @@ const Winemass = () => {
 
           // Desenhar texto da uva com possível quebra de linha
           tempCtx.save();
-          tempCtx.translate(grapeContainerX + grapeContainerWidth/2 + 20, grapeContainerY + grapeContainerHeight/2);
+          tempCtx.translate(grapeContainerX + grapeContainerWidth/2, grapeContainerY + grapeContainerHeight/2);
           tempCtx.rotate(-Math.PI / 2);
           
           // Ajustar tamanho da fonte se houver mais de uma linha
@@ -205,12 +207,13 @@ const Winemass = () => {
             tempCtx.font = `900 ${smallerFontSize}px "Nunito"`;
           }
           
-          const lineHeight = lines.length > 1 ? smallerFontSize * 1.2 : 0;
+          const lineHeight = lines.length > 1 ? smallerFontSize * 1.2 : fontSize * 1.2;
           const totalHeight = (lines.length - 1) * lineHeight;
-          const startY = -totalHeight / 2;
+          const startY = -(totalHeight / 2) - (lineHeight / 2);
           
           lines.forEach((line, index) => {
-            tempCtx.fillText(line, 0, startY + (index * lineHeight));
+            const y = startY + (index * lineHeight) + lineHeight;
+            tempCtx.fillText(line, 0, y);
           });
           tempCtx.restore();
 
