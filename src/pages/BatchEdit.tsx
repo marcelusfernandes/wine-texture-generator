@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { WineInfo } from '@/components/TextInputs';
-import BatchEditHeader from '@/components/BatchEditHeader';
+import { Link } from 'react-router-dom';
 import BatchEditDescription from '@/components/BatchEditDescription';
+import BatchEditHeader from '@/components/BatchEditHeader';
+import CsvImportButton from '@/components/CsvImportButton';
+import { WineInfo } from '@/components/TextInputs';
 import WineLabelsTable from '@/components/WineLabelsTable';
-import { drawWineLabel, drawErrorState } from '@/utils/canvasUtils';
+import { getProxiedImageUrl } from '@/utils/imageUtils';
+import { getProxyWithEditParams } from '@/components/wine-table/WineImageDisplay';
 
 const defaultWineInfo: WineInfo = {
   type: 'Cabernet Sauvignon',
@@ -21,6 +24,15 @@ interface WineLabel {
   wineInfo: WineInfo;
 }
 
+interface BatchEditHeaderProps {
+  onAddNew: () => void;
+  onImport: (labels: { name: string; wineInfo: WineInfo }[]) => void;
+  onExport: () => void;
+  onDownloadAll: () => void;
+  isExportDisabled: boolean;
+  isDownloadAllDisabled: boolean;
+}
+
 const BatchEdit = () => {
   const [labels, setLabels] = useState<WineLabel[]>([
     {
@@ -33,7 +45,6 @@ const BatchEdit = () => {
   
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const addNewLabel = () => {
     const newId = (Math.max(0, ...labels.map(label => parseInt(label.id))) + 1).toString();
@@ -77,29 +88,9 @@ const BatchEdit = () => {
     });
   };
 
-  const getPlaceholderImage = (): HTMLImageElement => {
-    const placeholderImg = new Image();
-    placeholderImg.src = '/placeholder.svg';
-    return placeholderImg;
-  };
-
   const exportSelectedLabels = async () => {
     if (selectedLabels.length === 0) {
       toast.error('Selecione pelo menos um rótulo para exportar');
-      return;
-    }
-
-    if (!canvasRef.current) {
-      console.error('Canvas reference not found');
-      toast.error('Erro ao preparar exportação');
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error('Could not get canvas context');
-      toast.error('Erro ao preparar exportação');
       return;
     }
 
@@ -122,80 +113,105 @@ const BatchEdit = () => {
       }
 
       try {
-        await new Promise<void>((resolve, reject) => {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          
-          const timeoutId = setTimeout(() => {
-            console.log(`Timeout loading image for "${label.name}"`);
-            toast.warning(`Tempo esgotado ao carregar imagem para "${label.name}". Usando imagem padrão.`);
-            
-            const placeholderImg = getPlaceholderImage();
-            drawWineLabel(ctx, placeholderImg, label.wineInfo);
-            
-            const link = document.createElement('a');
-            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
-            
-            link.download = filename;
-            link.href = canvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            exportCount++;
-            resolve();
-          }, 5000);
-          
-          img.onload = () => {
-            clearTimeout(timeoutId);
-            console.log(`Successfully loaded image for "${label.name}"`);
-            
-            drawWineLabel(ctx, img, label.wineInfo);
-            
-            const link = document.createElement('a');
-            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
-            
-            link.download = filename;
-            link.href = canvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            exportCount++;
-            resolve();
-          };
-          
-          img.onerror = () => {
-            clearTimeout(timeoutId);
-            console.error(`Error loading image for label "${label.name}" from URL: ${imageUrl}`);
-            toast.warning(`Erro ao carregar imagem para "${label.name}". Usando imagem padrão.`);
-            
-            const placeholderImg = getPlaceholderImage();
-            drawWineLabel(ctx, placeholderImg, label.wineInfo);
-            
-            const link = document.createElement('a');
-            const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
-            
-            link.download = filename;
-            link.href = canvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            exportCount++;
-            resolve();
-          };
-          
-          img.src = imageUrl;
+        // Mostrar toast de processamento
+        toast.loading(`Processando imagem "${label.name}"...`, {
+          id: `processing-${labelId}`,
+          duration: 5000
         });
+
+        // Usar o mesmo mecanismo do WineImageDisplay
+        // Criar iframe para download
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        // Configurar URL com parâmetros usando o mesmo mecanismo do WineImageDisplay
+        const fileName = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+        const proxiedUrl = await getProxiedImageUrl(imageUrl);
+        const editUrl = getProxyWithEditParams(proxiedUrl, label.wineInfo, fileName);
+        
+        // Acionar o download via iframe
+        iframe.src = editUrl;
+        
+        // Remover iframe após o download começar
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          toast.dismiss(`processing-${labelId}`);
+          exportCount++;
+          
+          // Mostrar sucesso só quando terminar de processar todos
+          if (exportCount >= totalToExport) {
+            toast.success(`${exportCount} de ${totalToExport} rótulos exportados com sucesso`);
+          }
+        }, 2000);
       } catch (error) {
         console.error('Export error:', error);
         toast.error(`Erro ao exportar "${label.name}": ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
       }
     }
+  };
 
-    if (exportCount > 0) {
-      toast.success(`${exportCount} de ${totalToExport} rótulos exportados com sucesso`);
+  const downloadAllLabels = async () => {
+    if (labels.length === 0) {
+      toast.error('Não há rótulos para baixar');
+      return;
+    }
+
+    try {
+      // Mostrar toast de processamento
+      const toastId = toast.loading('Processando todas as imagens...', {
+        duration: 10000
+      });
+
+      // Coletar URLs de todas as imagens válidas
+      const imageUrlsPromises = labels
+        .filter(label => {
+          if (imageErrors[label.id]) {
+            toast.error(`Rótulo "${label.name}" possui erro na imagem e não pode ser baixado`);
+            return false;
+          }
+          const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
+          if (!imageUrl) {
+            toast.error(`Rótulo "${label.name}" não possui imagem para baixar`);
+            return false;
+          }
+          return true;
+        })
+        .map(async label => {
+          const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
+          const fileName = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+          const proxiedUrl = await getProxiedImageUrl(imageUrl!);
+          return getProxyWithEditParams(proxiedUrl, label.wineInfo, fileName);
+        });
+
+      const imageUrls = await Promise.all(imageUrlsPromises);
+
+      if (imageUrls.length === 0) {
+        toast.dismiss(toastId);
+        toast.error('Nenhuma imagem válida encontrada para download');
+        return;
+      }
+
+      // Fazer requisição POST para o endpoint /download-all
+      const response = await fetch('http://localhost:3000/download-all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ urls: imageUrls })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro ao baixar imagens');
+      }
+
+      const result = await response.json();
+      
+      toast.dismiss(toastId);
+      toast.success(`${result.files.length} imagens baixadas com sucesso`);
+    } catch (error) {
+      console.error('Download all error:', error);
+      toast.error('Erro ao baixar imagens: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
     }
   };
 
@@ -206,7 +222,9 @@ const BatchEdit = () => {
           onAddNew={addNewLabel} 
           onImport={handleCsvImport}
           onExport={exportSelectedLabels}
+          onDownloadAll={downloadAllLabels}
           isExportDisabled={selectedLabels.length === 0}
+          isDownloadAllDisabled={labels.length === 0}
         />
 
         <div className="bg-white rounded-xl shadow-md p-6 animate-fade-up">
@@ -219,13 +237,6 @@ const BatchEdit = () => {
           />
         </div>
       </div>
-
-      <canvas 
-        ref={canvasRef} 
-        width={1080} 
-        height={1080} 
-        style={{ display: 'none' }}
-      />
     </div>
   );
 };

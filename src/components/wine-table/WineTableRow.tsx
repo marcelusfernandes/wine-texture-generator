@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { toast } from "sonner";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -84,6 +83,7 @@ const WineTableRow: React.FC<WineTableRowProps> = ({
         <WineImageDisplay 
           imageUrl={effectiveImageUrl} 
           alt={label.name}
+          wineInfo={label.wineInfo}
         />
       </TableCell>
       <TableCell>

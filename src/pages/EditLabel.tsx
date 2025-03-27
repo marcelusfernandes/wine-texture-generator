@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -12,21 +11,41 @@ import { isImageFile } from '@/utils/imageUtils';
 const EditLabel = () => {
   const { id } = useParams<{ id: string }>();
   
-  // In a real app, this would fetch the label data from an API or storage
-  // For now, we'll just use placeholder data
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [wineInfo, setWineInfo] = useState<WineInfo>({
-    type: 'Cabernet Sauvignon',
-    origin: 'France',
-    taste: 'Dry',
-    corkType: 'Cork'
+    type: '',
+    origin: '',
+    taste: '',
+    corkType: '',
+    info_base: ''
   });
   const [labelName, setLabelName] = useState(`Wine Label ${id}`);
 
   useEffect(() => {
-    // Simulating a data fetch
     toast.info(`Editing label #${id}`);
   }, [id]);
+
+  const extractInfoFromFilename = (filename: string): WineInfo => {
+    // Remove a extensão do arquivo
+    const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+    
+    // Divide o nome em partes usando pontos como separador
+    const parts = nameWithoutExt.split('.');
+    
+    // Extrai as informações na ordem: nome.uva.origem.sabor.tampa
+    const [name, type = '', origin = '', taste = '', corkType = ''] = parts;
+    
+    // Atualiza o nome do rótulo
+    setLabelName(name.replace(/-/g, ' '));
+    
+    return {
+      type: type.replace(/-/g, ' ') || wineInfo.type,
+      origin: origin.replace(/-/g, ' ') || wineInfo.origin,
+      taste: taste.replace(/-/g, ' ') || wineInfo.taste,
+      corkType: corkType.replace(/-/g, ' ') || wineInfo.corkType,
+      info_base: wineInfo.info_base
+    };
+  };
 
   const handleImageUpload = (file: File, preview: string) => {
     if (!isImageFile(file)) {
@@ -35,7 +54,12 @@ const EditLabel = () => {
     }
     
     setImageUrl(preview);
-    toast.success('Image uploaded successfully');
+
+    // Extrair informações do nome do arquivo
+    const extractedInfo = extractInfoFromFilename(file.name);
+    setWineInfo(extractedInfo);
+    
+    toast.success('Imagem carregada e informações extraídas do nome do arquivo');
   };
 
   const handleInfoChange = (newInfo: WineInfo) => {
@@ -69,7 +93,10 @@ const EditLabel = () => {
           <div className="space-y-8">
             <div className="p-6 rounded-xl glass-panel animate-fade-up">
               <h2 className="text-xl font-medium mb-4">Upload Wine Image</h2>
-              <ImageUploader onImageUpload={handleImageUpload} />
+              <ImageUploader 
+                onImageUpload={handleImageUpload} 
+                helpText="Nome do arquivo deve seguir o formato: nome.uva.origem.sabor.tampa.png"
+              />
             </div>
 
             <div className="p-6 rounded-xl glass-panel animate-fade-up" style={{ animationDelay: '100ms' }}>

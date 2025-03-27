@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for canvas drawing operations
  */
@@ -9,14 +8,14 @@ export const CANVAS_CONFIG = {
   height: 1080,
   panels: {
     sweetnessPanel: {
-      x: 84,
+      x: 104,
       y: 0,
       width: 240,
       height: 587,
       color: '#890045'
     },
     grapePanel: {
-      x: 109,
+      x: 129,
       y: 587,
       width: 190,
       height: 492,

@@ -1,99 +1,58 @@
-
-import React, { useCallback, useState } from 'react';
-import { toast } from 'sonner';
-import { Upload, X, Link as LinkIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { getProxiedImageUrl } from '@/utils/imageUtils';
+import React, { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Upload } from 'lucide-react';
 
 interface ImageUploaderProps {
   onImageUpload: (file: File, preview: string) => void;
-  className?: string;
+  helpText?: string;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, className }) => {
-  const [dragging, setDragging] = useState(false);
-  
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setDragging(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      processFile(file);
+const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, helpText }) => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const preview = reader.result as string;
+        onImageUpload(file, preview);
+      };
+      reader.readAsDataURL(file);
     }
-  }, []);
+  }, [onImageUpload]);
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      processFile(file);
-    }
-  }, []);
-
-  const processFile = (file: File) => {
-    if (!file.type.match('image.*')) {
-      toast.error('Please upload an image file');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        onImageUpload(file, e.target.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+    },
+    maxFiles: 1
+  });
 
   return (
     <div
-      className={cn(
-        "relative flex flex-col items-center justify-center w-full h-60 transition-all duration-300",
-        "border-2 border-dashed rounded-xl p-6",
-        dragging ? "border-primary bg-primary/5" : "border-border bg-secondary/50",
-        "animate-fade-in", 
-        className
-      )}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      {...getRootProps()}
+      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+        isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/20'
+      }`}
     >
-      <div className="flex flex-col items-center justify-center gap-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <Upload className="h-8 w-8 text-primary" />
-        </div>
-        <div>
-          <p className="font-medium text-lg">Drag and drop your wine image</p>
-          <p className="text-sm text-muted-foreground">or click to browse your files</p>
-          <p className="text-xs text-muted-foreground mt-1">Supported formats: JPG, PNG, GIF, WEBP</p>
-        </div>
-        <Button variant="secondary" className="mt-2">
-          Select Image
-        </Button>
-        
-        <div className="flex items-center gap-2 mt-2">
-          <LinkIcon className="h-4 w-4 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">
-            Or add a URL in the Wine Information section below
+      <input {...getInputProps()} />
+      <div className="flex flex-col items-center">
+        <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="font-medium">
+          {isDragActive ? 'Drop the image here' : 'Drag and drop your wine image'}
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          or click to browse your files
+        </p>
+        <p className="text-xs text-muted-foreground mt-4">
+          Supported formats: JPG, PNG, GIF, WEBP
+        </p>
+        {helpText && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {helpText}
           </p>
-        </div>
+        )}
       </div>
-      <input
-        type="file"
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        onChange={handleFileInput}
-        accept="image/jpeg,image/png,image/gif,image/webp"
-      />
     </div>
   );
 };

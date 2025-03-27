@@ -130,38 +130,31 @@ export const testImageUrl = (url: string): Promise<boolean> => {
 /**
  * Proxy an image URL to bypass CORS restrictions
  * @param url The original image URL
- * @returns Promise with the proxied image URL (as data URL)
+ * @returns Promise with the proxied URL
  */
 export const getProxiedImageUrl = async (url: string): Promise<string> => {
-  // If already a data URL, return it unchanged
-  if (url.startsWith('data:')) {
+  // If already a data URL or a local proxy URL, return it unchanged
+  if (url.startsWith('data:') || url.includes('localhost:3000/proxy')) {
     return url;
   }
   
   try {
-    // Use a CORS proxy service
-    const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
+    // Use our local proxy server
+    const proxyUrl = `http://localhost:3000/proxy?url=${encodeURIComponent(url)}`;
+    console.log(`[getProxiedImageUrl] Using proxy: ${proxyUrl}`);
     
-    const response = await fetch(proxyUrl, {
-      headers: {
-        'Origin': window.location.origin
-      }
-    });
+    // Test if the proxy is working by making a HEAD request
+    const testResponse = await fetch(proxyUrl, { method: 'HEAD' }).catch(() => null);
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+    if (!testResponse || !testResponse.ok) {
+      console.error('[getProxiedImageUrl] Proxy server not available');
+      throw new Error('Proxy server not available');
     }
     
-    // Convert to blob and then to data URL
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    // Return the proxy URL directly - we'll stream the image through the proxy
+    return proxyUrl;
   } catch (error) {
-    console.error('Error proxying image:', error);
+    console.error('[getProxiedImageUrl] Error:', error);
     // Return the original URL as fallback
     return url;
   }
