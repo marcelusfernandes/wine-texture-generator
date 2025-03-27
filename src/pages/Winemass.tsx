@@ -147,6 +147,16 @@ const Winemass = () => {
           const tasteContainerY = 0; // 0px em 1520px
           tempCtx.fillRect(tasteContainerX, tasteContainerY, tasteContainerWidth, tasteContainerHeight);
 
+          // Garantir que a fonte está carregada
+          const fontBlack = new FontFace('Nunito', 'url(/attached_assets/Nunito-Black.woff)', {
+            weight: '900',
+            style: 'normal'
+          });
+          
+          await fontBlack.load();
+          document.fonts.add(fontBlack);
+          await document.fonts.ready;
+
           // Configurar fonte para o sabor
           const tasteFontSize = 1520 * (152/1520); // 152px em 1520px
           tempCtx.font = `900 ${tasteFontSize}px "Nunito"`; // Nunito Black (weight 900)
