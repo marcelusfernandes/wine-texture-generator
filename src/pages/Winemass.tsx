@@ -159,8 +159,7 @@ const Winemass = () => {
           tempCtx.translate(tasteContainerX + tasteContainerWidth/2, tasteContainerY + tasteContainerHeight/2);
           tempCtx.rotate(-Math.PI / 2);
           const tasteLineHeight = tasteFontSize * 1.2;
-          const tasteStartY = -(tasteLineHeight / 2);
-          tempCtx.fillText(taste, 0, tasteStartY + tasteLineHeight);
+          tempCtx.fillText(taste, 0, 0);
           tempCtx.restore();
 
           // Desenhar container da uva
