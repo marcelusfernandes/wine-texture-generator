@@ -208,12 +208,11 @@ const Winemass = () => {
           }
           
           const lineHeight = lines.length > 1 ? smallerFontSize * 1.2 : fontSize * 1.2;
-          const totalHeight = (lines.length - 1) * lineHeight;
-          const startY = -(totalHeight / 2) - (lineHeight / 2);
+          const totalHeight = lines.length * lineHeight;
+          const startY = -totalHeight / 2;
           
           lines.forEach((line, index) => {
-            const y = startY + (index * lineHeight) + lineHeight;
-            tempCtx.fillText(line, 0, y);
+            tempCtx.fillText(line, 0, startY + (index + 0.5) * lineHeight);
           });
           tempCtx.restore();
 
