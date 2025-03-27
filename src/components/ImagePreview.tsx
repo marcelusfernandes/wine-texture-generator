@@ -62,7 +62,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, wineInfo }) => {
 
     // Configurar fonte para o sabor
     const tasteFontSize = size * (152/1520); // 152px em 1520px
-    ctx.font = `900 ${tasteFontSize}px "Nunito"`; // Nunito Black (weight 900)
+    ctx.font = `900 ${tasteFontSize}px "Nunito Sans"`; // Nunito Black (weight 900)
     ctx.textBaseline = 'middle';
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
