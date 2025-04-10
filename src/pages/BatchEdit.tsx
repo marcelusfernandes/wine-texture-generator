@@ -106,23 +106,18 @@ const BatchEdit = () => {
   };
 
   const exportSelectedLabels = async () => {
-    if (selectedLabels.length === 0) {
-      toast.error('Selecione pelo menos um rótulo para exportar');
+    // Verifica se há rótulos carregados
+    if (labels.length === 0) {
+      toast.error('Não há rótulos para exportar');
       return;
     }
 
     let exportCount = 0;
-    const totalToExport = selectedLabels.length;
+    const totalToExport = labels.length;
     
-    for (const labelId of selectedLabels) {
-      const label = labels.find(l => l.id === labelId);
-      if (!label) continue;
-
-      if (imageErrors[labelId]) {
-        toast.error(`Rótulo "${label.name}" possui erro na imagem e não pode ser exportado`);
-        continue;
-      }
-
+    // Processa cada rótulo
+    for (const label of labels) {
+      // Verifica se tem URL da imagem
       const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
       if (!imageUrl) {
         toast.error(`Rótulo "${label.name}" não possui imagem para exportar`);
@@ -130,37 +125,38 @@ const BatchEdit = () => {
       }
 
       try {
-        // Mostrar toast de processamento
+        // Mostra mensagem de processamento
         toast.loading(`Processando imagem "${label.name}"...`, {
-          id: `processing-${labelId}`,
+          id: `processing-${label.id}`,
           duration: 5000
         });
 
-        // Usar o mesmo mecanismo do WineImageDisplay
-        // Criar iframe para download
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
+        // Faz o download direto da imagem original
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        // Configurar URL com parâmetros usando o mesmo mecanismo do WineImageDisplay
-        const fileName = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
-        const proxiedUrl = await getProxiedImageUrl(imageUrl);
-        const editUrl = getProxyWithEditParams(proxiedUrl, label.wineInfo, fileName);
+        // Criar blob da imagem
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
         
-        // Acionar o download via iframe
-        iframe.src = editUrl;
-        
-        // Remover iframe após o download começar
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          toast.dismiss(`processing-${labelId}`);
-          exportCount++;
+        // Criar link para download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast.dismiss(`processing-${label.id}`);
+        exportCount++;
           
-          // Mostrar sucesso só quando terminar de processar todos
-          if (exportCount >= totalToExport) {
-            toast.success(`${exportCount} de ${totalToExport} rótulos exportados com sucesso`);
-          }
-        }, 2000);
+        // Mostrar sucesso só quando terminar de processar todos
+        if (exportCount >= totalToExport) {
+          toast.success(`${exportCount} de ${totalToExport} rótulos exportados com sucesso`);
+        }
       } catch (error) {
         console.error('Export error:', error);
         toast.error(`Erro ao exportar "${label.name}": ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
@@ -181,14 +177,9 @@ const BatchEdit = () => {
 
       console.log('Iniciando processamento de', labels.length, 'imagens');
 
-      // Coletar URLs de todas as imagens válidas
-      const imageUrlsPromises = labels
+      // Preparar dados para enviar ao servidor
+      const imagesToDownload = labels
         .filter(label => {
-          if (imageErrors[label.id]) {
-            console.log('Pulando imagem com erro:', label.name);
-            toast.error(`Rótulo "${label.name}" possui erro na imagem e não pode ser baixado`);
-            return false;
-          }
           const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
           if (!imageUrl) {
             console.log('Pulando imagem sem URL:', label.name);
@@ -197,80 +188,49 @@ const BatchEdit = () => {
           }
           return true;
         })
-        .map(async label => {
-          try {
-            const imageUrl = label.imageUrl || label.wineInfo.imageUrl;
-            if (!imageUrl) return null;
+        .map(label => {
+          // Formatar o nome do arquivo seguindo a estrutura:
+          // nome.tipo-uva.origem.sabor.tipo-tampa
+          const filename = `${label.name.toLowerCase().replace(/\s+/g, '-')}.${
+            label.wineInfo.type.toLowerCase().replace(/\s+/g, '-')}.${
+            label.wineInfo.origin.toLowerCase().replace(/\s+/g, '-')}.${
+            label.wineInfo.taste.toLowerCase().replace(/\s+/g, '-')}.${
+            label.wineInfo.corkType.toLowerCase().replace(/\s+/g, '-')}.png`;
 
-            console.log('Processando imagem:', label.name);
-            
-            // Usar o proxy na porta correta (3002)
-            const fileName = `${label.name.toLowerCase().replace(/\s+/g, '-')}.png`;
-            const proxiedUrl = await getProxiedImageUrl(imageUrl);
-            const editUrl = getProxyWithEditParams(proxiedUrl, label.wineInfo, fileName);
-            
-            // Fazer a requisição através do proxy
-            const response = await fetch(editUrl);
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const blob = await response.blob();
-            const base64Data = await blobToBase64(blob);
-            
-            console.log('Imagem processada com sucesso:', label.name);
-            
-            return {
-              data: base64Data,
-              filename: `${label.name.toLowerCase().replace(/\s+/g, '-')}.${label.wineInfo.type.toLowerCase().replace(/\s+/g, '-')}.${label.wineInfo.origin.toLowerCase().replace(/\s+/g, '-')}.${label.wineInfo.taste.toLowerCase().replace(/\s+/g, '-')}.${label.wineInfo.corkType.toLowerCase().replace(/\s+/g, '-')}.png`
-            };
-          } catch (error) {
-            console.error(`Erro ao processar imagem do rótulo ${label.name}:`, error);
-            toast.error(`Erro ao processar imagem do rótulo "${label.name}": ${error.message}`);
-            return null;
-          }
+          return {
+            url: label.imageUrl || label.wineInfo.imageUrl,
+            filename: filename
+          };
         });
 
-      console.log('Aguardando processamento de todas as imagens...');
-      const imageData = (await Promise.all(imageUrlsPromises)).filter(Boolean);
-
-      if (imageData.length === 0) {
-        console.error('Nenhuma imagem válida após processamento');
+      if (imagesToDownload.length === 0) {
         toast.dismiss(toastId);
-        toast.error('Nenhuma imagem válida encontrada para download');
+        toast.error('Nenhuma imagem válida para download');
         return;
       }
 
-      console.log('Total de imagens válidas:', imageData.length);
+      // Chamar o endpoint do servidor
+      const response = await fetch('http://localhost:3000/download-all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ images: imagesToDownload })
+      });
 
-      // Criar um arquivo ZIP contendo todas as imagens
-      const zip = new JSZip();
-      
-      for (const { data, filename } of imageData) {
-        console.log('Adicionando ao ZIP:', filename);
-        // Remover o prefixo data:image/...;base64,
-        const base64Data = data.split(',')[1];
-        zip.file(filename, base64Data, { base64: true });
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
       }
 
-      // Gerar o arquivo ZIP
-      console.log('Gerando arquivo ZIP...');
-      const content = await zip.generateAsync({ type: 'blob' });
-      
-      // Criar URL do blob e link para download
-      console.log('Criando link para download...');
-      const url = window.URL.createObjectURL(content);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'wine-labels.zip';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.dismiss(toastId);
-      toast.success(`${imageData.length} imagens baixadas com sucesso`);
-      console.log('Download concluído com sucesso');
+      const result = await response.json();
+
+      if (result.success) {
+        toast.dismiss(toastId);
+        toast.success(`${result.totalProcessed} imagens baixadas com sucesso`);
+        console.log('Download concluído com sucesso');
+      } else {
+        throw new Error(result.error || 'Erro desconhecido ao baixar imagens');
+      }
     } catch (error) {
       console.error('Erro detalhado no download:', error);
       toast.error('Erro ao baixar imagens: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));

@@ -1,59 +1,9 @@
-
-import React, { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import ImageUploader from '@/components/ImageUploader';
-import TextInputs, { WineInfo } from '@/components/TextInputs';
-import ImagePreview from '@/components/ImagePreview';
-import { isImageFile, testImageUrl } from '@/utils/imageUtils';
+import { Sparkles, Wine } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const Index = () => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [wineInfo, setWineInfo] = useState<WineInfo>({
-    type: '',
-    origin: '',
-    taste: '',
-    corkType: '',
-    imageUrl: ''
-  });
-
-  // Effect to handle URL changes from the form
-  useEffect(() => {
-    if (wineInfo.imageUrl && wineInfo.imageUrl !== imageUrl) {
-      // Only update if the URLs are different
-      testImageUrl(wineInfo.imageUrl)
-        .then(isValid => {
-          if (isValid) {
-            setImageUrl(wineInfo.imageUrl);
-          } else {
-            toast.error('A URL da imagem não é válida ou está inacessível');
-          }
-        });
-    }
-  }, [wineInfo.imageUrl, imageUrl]);
-
-  const handleImageUpload = (file: File, preview: string) => {
-    if (!isImageFile(file)) {
-      toast.error('Por favor, faça upload de um arquivo de imagem válido');
-      return;
-    }
-    
-    // Clear the URL field when uploading a file
-    setWineInfo(prev => ({
-      ...prev,
-      imageUrl: null
-    }));
-    
-    setImageUrl(preview);
-    toast.success('Imagem carregada com sucesso');
-  };
-
-  const handleInfoChange = (newInfo: WineInfo) => {
-    setWineInfo(newInfo);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-12 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
@@ -66,34 +16,26 @@ const Index = () => {
             Create Professional Wine Labels
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
-            Upload your wine bottle image and add product information for your PIM system
+            Upload the win images
           </p>
-          <div className="flex justify-center mt-4 animate-fade-up" style={{ animationDelay: '200ms' }}>
-            <Link to="/batch">
-              <Button variant="outline" className="gap-2">
-                <List className="h-4 w-4" />
-                Batch Edit Mode
-              </Button>
-            </Link>
-          </div>
         </header>
 
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          <div className="space-y-8">
-            <div className="p-6 rounded-xl glass-panel animate-fade-up" style={{ animationDelay: '200ms' }}>
-              <h2 className="text-xl font-medium mb-4">Upload Wine Image</h2>
-              <ImageUploader onImageUpload={handleImageUpload} />
-            </div>
-
-            <div className="p-6 rounded-xl glass-panel animate-fade-up" style={{ animationDelay: '300ms' }}>
-              <h2 className="text-xl font-medium mb-4">Wine Information</h2>
-              <TextInputs wineInfo={wineInfo} onChange={handleInfoChange} />
-            </div>
-          </div>
-
-          <div className="p-6 rounded-xl glass-panel animate-fade-up" style={{ animationDelay: '400ms' }}>
-            <ImagePreview imageUrl={imageUrl} wineInfo={wineInfo} />
-          </div>
+        <div className="max-w-md mx-auto animate-fade-up" style={{ animationDelay: '200ms' }}>
+          <Link to="/winemass">
+            <Card className="h-full hover:bg-accent/50 transition-colors">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wine className="h-5 w-5" />
+                  Winemass
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Acesse a página Winemass para gerenciar seus rótulos de vinho
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         <footer className="mt-16 text-center text-sm text-muted-foreground animate-fade-up" style={{ animationDelay: '500ms' }}>

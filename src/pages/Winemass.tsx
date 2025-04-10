@@ -257,16 +257,38 @@ const Winemass = () => {
           const flagImg = new Image();
           let normalizedCountry = item.wineInfo.origin
             .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/\s+/g, '')
-            .replace(/^./, str => str.toUpperCase());
+            .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+            .toLowerCase() // Converter para minúsculo primeiro
+            .trim(); // Remover espaços no início e fim
           
+          // Mapa de nomes de arquivo exatamente como estão na pasta
           const countryMap: { [key: string]: string } = {
-            'Franca': 'França',
-            'Eua': 'Eua',
+            'franca': 'França',
+            'eua': 'Eua',
+            'africa do sul': 'Africa do sul',
+            'australia': 'Australia',
+            'italia': 'Italia',
+            'chile': 'Chile',
+            'espanha': 'Espanha',
+            'uruguai': 'Uruguai',
+            'argentina': 'Argentina',
+            'portugal': 'Portugal',
+            'brasil': 'Brasil',
+            'alemanha': 'Alemanha'
           };
           
-          normalizedCountry = countryMap[normalizedCountry] || normalizedCountry;
+          // Procurar no mapa de países primeiro
+          normalizedCountry = countryMap[normalizedCountry];
+          
+          // Se não encontrar no mapa, tentar usar o nome original capitalizado
+          if (!normalizedCountry) {
+            normalizedCountry = item.wineInfo.origin
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+          }
+          
+          console.log('Tentando carregar bandeira para:', normalizedCountry);
           
           await new Promise((resolve, reject) => {
             flagImg.onload = resolve;
@@ -341,7 +363,7 @@ const Winemass = () => {
       <div className="max-w-7xl mx-auto">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Link to="/batch">
+            <Link to="/">
               <Button variant="outline" size="icon" className="h-9 w-9">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
