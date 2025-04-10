@@ -114,24 +114,23 @@ const BatchUpload = () => {
       // Coletar URLs de todas as imagens válidas
       const imageUrlsPromises = labels
         .filter(label => {
-          if (imageErrors[label.id]) {
-            toast.error(`Rótulo "${label.name}" possui erro na imagem e não pode ser baixado`);
-            return false;
-          }
-          const imageUrl = label.imageUrl;
-          if (!imageUrl) {
+          if (!label.imageUrl) {
             toast.error(`Rótulo "${label.name}" não possui imagem para baixar`);
             return false;
           }
           return true;
         })
         .map(async label => {
-          const imageUrl = label.imageUrl;
-          if (!imageUrl) return null;
-
           try {
-            // Converter blob URL para base64
-            const response = await fetch(imageUrl);
+            // Usar a URL correta do proxy (porta 3002)
+            const proxyUrl = `http://localhost:3002/proxy?url=${encodeURIComponent(label.imageUrl)}`;
+            console.log('Tentando acessar:', proxyUrl);
+            
+            const response = await fetch(proxyUrl);
+            if (!response.ok) {
+              throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+            }
+            
             const blob = await response.blob();
             const base64Data = await blobToBase64(blob);
             
@@ -141,12 +140,12 @@ const BatchUpload = () => {
             };
           } catch (error) {
             console.error(`Erro ao processar imagem do rótulo ${label.name}:`, error);
-            toast.error(`Erro ao processar imagem do rótulo "${label.name}"`);
+            toast.error(`Erro ao processar imagem do rótulo "${label.name}": ${error.message}`);
             return null;
           }
         });
 
-      const imageData = (await Promise.all(imageUrlsPromises)).filter((data): data is { data: string; filename: string } => data !== null);
+      const imageData = (await Promise.all(imageUrlsPromises)).filter(Boolean);
 
       if (imageData.length === 0) {
         toast.dismiss(toastId);
@@ -156,11 +155,12 @@ const BatchUpload = () => {
 
       // Criar um arquivo ZIP contendo todas as imagens
       const zip = new JSZip();
-      imageData.forEach(({ data, filename }) => {
+      
+      for (const { data, filename } of imageData) {
         // Remover o prefixo data:image/...;base64,
         const base64Data = data.split(',')[1];
         zip.file(filename, base64Data, { base64: true });
-      });
+      }
 
       // Gerar o arquivo ZIP
       const content = await zip.generateAsync({ type: 'blob' });
@@ -178,7 +178,7 @@ const BatchUpload = () => {
       toast.dismiss(toastId);
       toast.success(`${imageData.length} imagens baixadas com sucesso`);
     } catch (error) {
-      console.error('Download all error:', error);
+      console.error('Erro ao baixar imagens:', error);
       toast.error('Erro ao baixar imagens: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
     }
   };

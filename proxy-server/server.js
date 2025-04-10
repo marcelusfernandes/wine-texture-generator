@@ -7,37 +7,15 @@ const fs = require('fs');
 const app = express();
 const exec = require('child_process').exec;
 
-// Middleware para processar JSON
+// Configuração básica do express
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Configuração simples do CORS - permite todas as origens
+app.use(cors());
+
 // Servir arquivos estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Configurar CORS para permitir requisições do frontend
-app.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082', 'http://localhost:8083', 'http://localhost:5173', 'http://localhost:3000', '*'],
-  methods: ['GET', 'POST', 'HEAD', 'OPTIONS'],
-  credentials: true,
-  exposedHeaders: ['Content-Disposition', 'Content-Type', 'Content-Length']
-}));
-
-// Middleware para adicionar cabeçalhos CORS a todas as respostas
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, HEAD, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Expose-Headers', 'Content-Disposition, Content-Type, Content-Length');
-  
-  // Permitir compartilhamento de credenciais
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  next();
-});
 
 // Função para aplicar edições à imagem baseadas no tipo de vinho
 async function applyWineEditToImage(buffer, options) {
@@ -47,207 +25,15 @@ async function applyWineEditToImage(buffer, options) {
     // 1. Obter metadados da imagem
     const metadata = await image.metadata();
     
-    // 2. Preparar os textos e elementos para o rótulo
-    const wineName = options.wineName || 'Vinho';
-    const wineType = options.wineType || 'GRAPE VARIETY';
-    const wineOrigin = options.wineOrigin || 'COUNTRY';
-    const wineTaste = options.wineTaste || 'SWEET';
-    const corkType = options.corkType || 'CLOSURE';
-
-    // Redimensionar a imagem para 1080x1080 para padronizar o layout
-    const targetSize = 1080;
-    
-    // Calcular a dimensão para o redimensionamento preservando a proporção
-    let resizeOptions = {};
-    if (metadata.width >= metadata.height) {
-      // Imagem mais larga que alta
-      resizeOptions = {
-        height: targetSize,
-        fit: sharp.fit.cover,
-        position: sharp.strategy.attention
-      };
-    } else {
-      // Imagem mais alta que larga
-      resizeOptions = {
-        width: targetSize,
-        fit: sharp.fit.cover,
-        position: sharp.strategy.attention
-      };
-    }
-    
-    // Redimensionar a imagem
-    image = image.resize(resizeOptions);
-    
-    // Adicionar padding para garantir saída quadrada 1080x1080
-    image = image.extend({
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      background: { r: 255, g: 255, b: 255, alpha: 1 }
-    }).resize(targetSize, targetSize, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } });
-    
-    // Tamanho final fixo
-    const width = targetSize;
-    const height = targetSize;
-    
-    // Log detalhado das informações sendo aplicadas à imagem
+    // Log das informações da imagem original
     console.log('-------------------------------------------');
-    console.log('🍷 APLICANDO LAYOUT NA IMAGEM EXPORTADA:');
+    console.log('🍷 PROCESSANDO IMAGEM ORIGINAL:');
     console.log('-------------------------------------------');
     console.log(`🖼️ Dimensões originais: ${metadata.width}x${metadata.height}px`);
-    console.log(`🖼️ Dimensões padronizadas: ${width}x${height}px`);
-    console.log(`🔤 Dados Aplicados:`);
-    console.log(`   • Nome do vinho: ${wineName} (não exibido no layout)`);
-    console.log(`   • Tipo de vinho: ${wineType}`);
-    console.log(`   • País de origem: ${wineOrigin}`);
-    console.log(`   • Sabor: ${wineTaste}`);
-    console.log(`   • Tipo de rolha: ${corkType}`);
-    console.log(`   • Variedade de uva: ${wineType}`);
     console.log('-------------------------------------------');
-    console.log(`🎨 Layout aplicado: Barras laterais + blocos de informação`);
-    console.log('-------------------------------------------');
-    
-    // 3. Criar o overlay SVG com o layout exato do rótulo seguindo a referência visual
-    const svgOverlay = `
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap');
-            
-            .sweet-text { 
-              fill: white; 
-              font-size: 110px;
-              font-family: 'Nunito Sans', sans-serif; 
-              font-weight: 900;
-              text-anchor: middle;
-              text-transform: uppercase;
-              line-height: 80px;
-              word-wrap: break-word;
-            }
-            .grape-text { 
-              fill: white; 
-              font-size: 62px;
-              font-family: 'Nunito Sans', sans-serif; 
-              font-weight: 900;
-              text-anchor: middle;
-              text-transform: uppercase;
-              line-height: 64px;
-              word-wrap: break-word;
-            }
-            .info-text { 
-              fill: #3F0E09; 
-              font-size: 56px;
-              font-family: 'Nunito Sans', sans-serif; 
-              font-weight: 900;
-              text-anchor: middle;
-              text-transform: uppercase;
-              line-height: 64px;
-              word-wrap: break-word;
-            }
-          </style>
-        </defs>
-        
-        <!-- Bloco esquerdo superior - cor vinho para sweet -->
-        <rect 
-          x="104" 
-          y="0" 
-          width="240" 
-          height="587" 
-          fill="#890045" 
-        />
-        
-        <!-- Bloco esquerdo inferior - cor cinza para grape variety -->
-        <rect 
-          x="129" 
-          y="587" 
-          width="190" 
-          height="492" 
-          fill="#666666" 
-        />
-        
-        <!-- Blocos brancos de fundo -->
-        <rect 
-          x="729" 
-          y="375" 
-          width="268" 
-          height="134" 
-          fill="white" 
-        />
-        
-        <rect 
-          x="678" 
-          y="932" 
-          width="378" 
-          height="134" 
-          fill="white" 
-        />
-        
-        <!-- Country - Posição Inferior Direita -->
-        <g transform="translate(660, 708)">
-          <!-- Quadrado cinza para Country -->
-          <rect 
-            x="${412/2 - 209/2}" 
-            y="0" 
-            width="209" 
-            height="210" 
-            fill="#D9D9D9" 
-          />
-          
-          <!-- Texto Country -->
-          <text 
-            x="${412/2}" 
-            y="${210 + 72/2}" 
-            class="info-text"
-            text-anchor="middle"
-          >${wineOrigin}</text>
-        </g>
-        
-        <!-- Closure Type - Posição Superior Direita -->
-        <g transform="translate(700, 151)">        
-          <!-- Imagem de lacre -->
-        </g>
-        
-        <!-- Texto SWEET vertical no bloco vinho -->
-        <g transform="translate(${104 + 240/2}, ${587/2})">
-          <text 
-            transform="rotate(-90)"
-            class="sweet-text"
-            text-anchor="middle"
-            dominant-baseline="middle"
-          >${wineTaste}</text>
-        </g>
-        
-        <!-- Texto GRAPE VARIETY vertical no bloco cinza -->
-        <g transform="translate(${129 + 190/2}, ${587 + 492/2})">
-          <text 
-            transform="rotate(-90)"
-            class="grape-text"
-            text-anchor="middle"
-            dominant-baseline="middle"
-          >${options.grape_variety || wineType}</text>
-        </g>
-      </svg>
-    `;
-    
-    // 4. Compor a imagem com o overlay SVG
-    const svgBuffer = Buffer.from(svgOverlay);
-    image = image.composite([
-      { input: svgBuffer, gravity: 'center' }
-    ]);
-    
-    // Carregar a imagem lacre.png
-    const lacreImage = await sharp(path.join(__dirname, 'public', 'images', 'lacre.png'))
-      .resize(100, 100)
-      .toBuffer();
 
-    // Compor a imagem lacre.png na imagem final
-    image = image.composite([
-      { input: lacreImage, left: 336 / 2 - 50, top: 210 + 10 }
-    ]);
-
-    // Retornar a imagem processada como buffer PNG
-    return await image.png().toBuffer();
+    // Retornar a imagem sem modificações
+    return await image.toBuffer();
   } catch (error) {
     console.error('[Image Processing] Error:', error);
     throw error;
@@ -270,26 +56,11 @@ app.get('/proxy', async (req, res) => {
     });
   }
   
-  // Verificar se é um download forçado e/ou edição
+  // Verificar se é um download forçado
   const isDownload = req.query.download === 'true';
-  const isEdit = req.query.edit === 'true';
   const customFilename = req.query.filename || '';
   
-  // Opções de edição
-  const editOptions = {
-    wineType: req.query.wineType || '',
-    wineOrigin: req.query.wineOrigin || '',
-    wineTaste: req.query.wineTaste || '',
-    wineName: req.query.wineName || '',
-    corkType: req.query.corkType || '',
-    grape_variety: req.query.grape_variety || 'GRAPE VARIETY'
-  };
-  
-  console.log(`[Proxy] Fetching image from: ${imageUrl} (download: ${isDownload}, edit: ${isEdit})`);
-  if (isEdit) {
-    console.log(`[Proxy] Edit options:`, editOptions);
-    console.log(`[Proxy] Filename: ${customFilename}`);
-  }
+  console.log(`[Proxy] Fetching image from: ${imageUrl} (download: ${isDownload})`);
   
   try {
     // Configurar cabeçalhos para evitar problemas de referrer
@@ -307,7 +78,6 @@ app.get('/proxy', async (req, res) => {
       const urlObj = new URL(imageUrl);
       headers.Referer = urlObj.origin;
       headers.Origin = urlObj.origin;
-      // Adicionar o hostname como um header adicional
       headers['X-Forwarded-Host'] = urlObj.hostname;
     } catch (e) {
       console.log('Could not parse URL origin:', e.message);
@@ -318,9 +88,9 @@ app.get('/proxy', async (req, res) => {
       method: 'GET',
       responseType: 'arraybuffer',
       headers,
-      timeout: 15000, // Aumentado para 15 segundos
+      timeout: 15000,
       maxRedirects: 5,
-      validateStatus: () => true // Aceitar qualquer código de status
+      validateStatus: () => true
     });
     
     // Verificar se a resposta foi bem-sucedida
@@ -334,7 +104,6 @@ app.get('/proxy', async (req, res) => {
     // Obter o tipo de conteúdo da resposta ou inferir pelo URL
     let contentType = response.headers['content-type'];
     if (!contentType || contentType === 'application/octet-stream') {
-      // Tenta inferir pelo URL
       if (imageUrl.endsWith('.jpg') || imageUrl.endsWith('.jpeg')) {
         contentType = 'image/jpeg';
       } else if (imageUrl.endsWith('.png')) {
@@ -344,48 +113,28 @@ app.get('/proxy', async (req, res) => {
       } else if (imageUrl.endsWith('.webp')) {
         contentType = 'image/webp';
       } else {
-        contentType = 'image/jpeg'; // Fallback para JPEG
-      }
-    }
-    
-    // Se a edição está ativada, processar a imagem antes de enviar
-    let imageData = response.data;
-    if (isEdit) {
-      try {
-        console.log(`[Proxy] Applying edits to image`);
-        imageData = await applyWineEditToImage(imageData, editOptions);
-        contentType = 'image/png'; // A saída após edição é sempre PNG
-      } catch (editError) {
-        console.error(`[Proxy] Error applying edits:`, editError);
-        // Se falhar a edição, continuamos com a imagem original
+        contentType = 'image/jpeg';
       }
     }
     
     // Definir cabeçalhos da resposta
     res.setHeader('Content-Type', contentType);
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache por 24 horas
+    res.setHeader('Cache-Control', 'public, max-age=86400');
     
-    // Adicionar cabeçalho para download, alterando o comportamento com base no parâmetro download
-    let filename;
-    if (customFilename) {
-      filename = customFilename;
-    } else {
-      filename = imageUrl.split('/').pop().split('?')[0] || 'image.png';
-    }
+    // Adicionar cabeçalho para download
+    let filename = customFilename || imageUrl.split('/').pop().split('?')[0] || 'image.png';
     
-    // Se foi solicitado download, force o Content-Disposition para 'attachment'
     if (isDownload) {
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       console.log(`[Proxy] Downloading image as ${filename}`);
     } else {
-      // Caso contrário, defina como 'inline' para visualização normal
       res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     }
     
-    // Enviar a imagem
-    console.log(`[Proxy] Success. Sending image as ${contentType}${isEdit ? ' (edited)' : ''}`);
-    res.send(imageData);
+    // Enviar a imagem original sem modificações
+    console.log(`[Proxy] Success. Sending original image as ${contentType}`);
+    res.send(response.data);
   } catch (error) {
     console.error('[Proxy] Error:', error.message);
     res.status(500).json({ 
@@ -397,16 +146,25 @@ app.get('/proxy', async (req, res) => {
 
 // Endpoint para download de todas as imagens
 app.post('/download-all', async (req, res) => {
-  console.log('[Download All] Received request with body');
-  
-  const images = req.body.images;
-  
-  if (!images || !Array.isArray(images)) {
-    console.error('[Download All] Invalid request body:', req.body);
-    return res.status(400).json({ error: 'Images parameter is required and must be an array' });
-  }
+  console.log('[Download All] Received request');
   
   try {
+    const images = req.body.images;
+    
+    if (!images || !Array.isArray(images)) {
+      console.error('[Download All] Invalid request body:', req.body);
+      return res.status(400).json({ 
+        error: 'Images parameter is required and must be an array',
+        received: req.body 
+      });
+    }
+
+    if (images.length === 0) {
+      return res.status(400).json({
+        error: 'Images array cannot be empty'
+      });
+    }
+    
     console.log(`[Download All] Processing ${images.length} images`);
     
     // Criar diretório de downloads se não existir
@@ -416,26 +174,102 @@ app.post('/download-all', async (req, res) => {
     }
     
     const downloadPromises = images.map(async (image, index) => {
-      console.log(`[Download All] Processing image ${index + 1}: ${image.filename}`);
-      
-      // Extrair os dados base64 da URL
-      const base64Data = image.data.split(',')[1];
-      const imageData = Buffer.from(base64Data, 'base64');
-      
-      const filepath = path.join(downloadsDir, image.filename);
-      fs.writeFileSync(filepath, imageData);
-      console.log(`[Download All] Saved image ${index + 1} to ${filepath}`);
-      return image.filename;
+      try {
+        if (!image.url) {
+          throw new Error(`Missing URL for image ${index + 1}`);
+        }
+
+        // Validar URL
+        try {
+          new URL(image.url);
+        } catch (e) {
+          throw new Error(`Invalid URL for image ${index + 1}: ${image.url}`);
+        }
+
+        console.log(`[Download All] Processing image ${index + 1}: ${image.url}`);
+
+        // Configurar cabeçalhos para evitar problemas de referrer
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          'Referer': 'https://www.google.com/',
+          'sec-fetch-dest': 'image',
+          'sec-fetch-mode': 'no-cors',
+          'sec-fetch-site': 'cross-site'
+        };
+
+        // Tentar obter o referrer da URL original
+        try {
+          const urlObj = new URL(image.url);
+          headers.Referer = urlObj.origin;
+          headers.Origin = urlObj.origin;
+        } catch (e) {
+          console.log(`Could not parse origin for URL ${image.url}:`, e.message);
+        }
+
+        // Baixar a imagem original
+        const response = await axios({
+          url: image.url,
+          method: 'GET',
+          responseType: 'arraybuffer',
+          headers,
+          timeout: 15000,
+          maxRedirects: 5,
+          validateStatus: (status) => status < 400
+        });
+
+        // Verificar o content-type
+        const contentType = response.headers['content-type'];
+        if (!contentType || !contentType.startsWith('image/')) {
+          throw new Error(`Invalid content type for image ${index + 1}: ${contentType}`);
+        }
+
+        // Gerar nome do arquivo baseado na URL ou usar o nome fornecido
+        const filename = image.filename || image.url.split('/').pop().split('?')[0] || `image_${index + 1}.jpg`;
+        const filepath = path.join(downloadsDir, filename);
+        
+        // Salvar a imagem original
+        await fs.promises.writeFile(filepath, response.data);
+        console.log(`[Download All] Saved original image ${index + 1} to ${filepath}`);
+        
+        return {
+          filename,
+          originalUrl: image.url,
+          size: response.data.length,
+          contentType
+        };
+      } catch (error) {
+        console.error(`[Download All] Error processing image ${index + 1}:`, error);
+        return {
+          error: true,
+          originalUrl: image.url,
+          message: error.message
+        };
+      }
     });
     
-    const downloadedFiles = await Promise.all(downloadPromises);
+    const results = await Promise.all(downloadPromises);
+    const downloadedFiles = results.filter(r => !r.error);
+    const errors = results.filter(r => r.error);
+    
+    if (downloadedFiles.length === 0) {
+      throw new Error('No images were successfully processed');
+    }
+    
     console.log('[Download All] Successfully downloaded all images');
-    res.json({ success: true, files: downloadedFiles });
+    res.json({ 
+      success: true, 
+      files: downloadedFiles,
+      totalProcessed: downloadedFiles.length,
+      totalFailed: errors.length,
+      errors: errors
+    });
   } catch (error) {
     console.error('[Download All] Error:', error);
     res.status(500).json({ 
       error: 'Failed to download images',
-      details: error.message
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
