@@ -16,7 +16,7 @@ const Index = () => {
             Create Professional Wine Labels
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
-            Upload your wine bottle image and add product information for your PIM system
+            Upload the win images
           </p>
         </header>
 
