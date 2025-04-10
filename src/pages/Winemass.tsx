@@ -257,16 +257,38 @@ const Winemass = () => {
           const flagImg = new Image();
           let normalizedCountry = item.wineInfo.origin
             .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/\s+/g, '')
-            .replace(/^./, str => str.toUpperCase());
+            .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+            .toLowerCase() // Converter para minúsculo primeiro
+            .trim(); // Remover espaços no início e fim
           
+          // Mapa de nomes de arquivo exatamente como estão na pasta
           const countryMap: { [key: string]: string } = {
-            'Franca': 'França',
-            'Eua': 'Eua',
+            'franca': 'França',
+            'eua': 'Eua',
+            'africa do sul': 'Africa do sul',
+            'australia': 'Australia',
+            'italia': 'Italia',
+            'chile': 'Chile',
+            'espanha': 'Espanha',
+            'uruguai': 'Uruguai',
+            'argentina': 'Argentina',
+            'portugal': 'Portugal',
+            'brasil': 'Brasil',
+            'alemanha': 'Alemanha'
           };
           
-          normalizedCountry = countryMap[normalizedCountry] || normalizedCountry;
+          // Procurar no mapa de países primeiro
+          normalizedCountry = countryMap[normalizedCountry];
+          
+          // Se não encontrar no mapa, tentar usar o nome original capitalizado
+          if (!normalizedCountry) {
+            normalizedCountry = item.wineInfo.origin
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+          }
+          
+          console.log('Tentando carregar bandeira para:', normalizedCountry);
           
           await new Promise((resolve, reject) => {
             flagImg.onload = resolve;
