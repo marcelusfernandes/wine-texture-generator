@@ -363,7 +363,7 @@ const Winemass = () => {
       <div className="max-w-7xl mx-auto">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Link to="/batch">
+            <Link to="/">
               <Button variant="outline" size="icon" className="h-9 w-9">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
