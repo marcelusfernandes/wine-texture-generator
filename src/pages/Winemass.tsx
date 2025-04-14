@@ -166,7 +166,7 @@ const Winemass = () => {
 
           // Desenhar texto do sabor
           tempCtx.save();
-          tempCtx.translate(tasteContainerX + tasteContainerWidth/2, tasteContainerY + tasteContainerHeight/2);
+          tempCtx.translate((tasteContainerX + 20) + tasteContainerWidth/2, tasteContainerY + tasteContainerHeight/2);
           tempCtx.rotate(-Math.PI / 2);
           const tasteLineHeight = tasteFontSize * 1.2;
           tempCtx.fillText(taste, 0, 0);
@@ -208,7 +208,7 @@ const Winemass = () => {
 
           // Desenhar texto da uva com possível quebra de linha
           tempCtx.save();
-          tempCtx.translate(grapeContainerX + grapeContainerWidth/2, grapeContainerY + grapeContainerHeight/2);
+          tempCtx.translate((grapeContainerX + 10) + grapeContainerWidth/2, grapeContainerY + grapeContainerHeight/2);
           tempCtx.rotate(-Math.PI / 2);
           
           // Ajustar tamanho da fonte se houver mais de uma linha
