@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { WineInfo } from '@/components/TextInputs';
 import WineLabelsTable from '@/components/WineLabelsTable';
 import JSZip from 'jszip';
+import { processCsvFile } from '@/utils/csv/csvProcessor';
 
 const defaultWineInfo: WineInfo = {
   type: 'Cabernet Sauvignon',
@@ -22,7 +23,11 @@ interface WineLabel {
   wineInfo: WineInfo;
 }
 
-const BatchUpload = () => {
+interface BatchUploadProps {
+  onLabelsProcessed?: (labels: { name: string; imageUrl: string | null; wineInfo: WineInfo }[]) => void;
+}
+
+const BatchUpload: React.FC<BatchUploadProps> = ({ onLabelsProcessed }) => {
   const [labels, setLabels] = useState<WineLabel[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
@@ -183,6 +188,65 @@ const BatchUpload = () => {
     }
   };
 
+  const handleCsvUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Por favor, selecione um arquivo CSV');
+      return;
+    }
+
+    try {
+      const toastId = toast.loading('Processando arquivo CSV...');
+      
+      // Processar o CSV
+      const processedLabels = await processCsvFile(file);
+      
+      // Enviar os dados processados para o proxy-server
+      const imagesToDownload = processedLabels
+        .filter(label => label.imageUrl)
+        .map(label => ({
+          url: label.imageUrl,
+          filename: `${label.name.toLowerCase().replace(/\s+/g, '-')}.${
+            label.wineInfo.type.toLowerCase().replace(/\s+/g, '-')}.${
+            label.wineInfo.origin.toLowerCase().replace(/\s+/g, '-')}.${
+            label.wineInfo.taste.toLowerCase().replace(/\s+/g, '-')}.${
+            label.wineInfo.corkType.toLowerCase().replace(/\s+/g, '-')}.png`
+        }));
+
+      // Enviar para o proxy-server baixar as imagens
+      const response = await fetch('http://localhost:3000/download-all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ images: imagesToDownload })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao baixar imagens: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.dismiss(toastId);
+        toast.success(`${result.totalProcessed} imagens baixadas com sucesso`);
+        
+        // Notificar o componente pai com os dados processados
+        if (onLabelsProcessed) {
+          onLabelsProcessed(processedLabels);
+        }
+      } else {
+        throw new Error('Falha ao processar imagens');
+      }
+    } catch (error) {
+      console.error('Erro ao processar CSV:', error);
+      toast.error(`Erro ao processar arquivo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-12 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
@@ -242,6 +306,30 @@ const BatchUpload = () => {
             selectedLabels={selectedLabels}
             onSelectionChange={setSelectedLabels}
           />
+        </div>
+
+        <div className="p-6 rounded-xl glass-panel animate-fade-up">
+          <h2 className="text-xl font-medium mb-4">Upload de CSV</h2>
+          <div className="border-2 border-dashed rounded-lg p-8 text-center">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleCsvUpload}
+              className="hidden"
+              id="csv-upload"
+            />
+            <label
+              htmlFor="csv-upload"
+              className="flex flex-col items-center cursor-pointer"
+            >
+              <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="font-medium">Arraste e solte seu arquivo CSV</h3>
+              <p className="text-sm text-muted-foreground mt-1">ou clique para selecionar o arquivo</p>
+              <p className="text-xs text-muted-foreground mt-4">
+                O arquivo CSV deve conter as colunas: nome, tipo, origem, sabor, tampa e URL da imagem
+              </p>
+            </label>
+          </div>
         </div>
       </div>
     </div>
