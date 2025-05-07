@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import BatchUpload from "@/pages/BatchUpload";
 import WineUpload from "@/pages/WineUpload";
 import Winemass from "@/pages/Winemass";
+import Wineauto from "@/pages/Wineauto";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/upload" element={<BatchUpload />} />
           <Route path="/wineupload" element={<WineUpload />} />
           <Route path="/winemass" element={<Winemass />} />
+          <Route path="/wineauto" element={<Wineauto />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
